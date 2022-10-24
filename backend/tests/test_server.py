@@ -18,7 +18,7 @@ def test_get_samples(db: database.Database, test_client: fastapi.testclient.Test
         )
     ]
     for sample in samples:
-        db.add(sample)
+        db.add_sample(sample)
     response = test_client.get('/samples')
     assert response.status_code == 200
     assert len(response.json()) == len(samples)
@@ -26,7 +26,7 @@ def test_get_samples(db: database.Database, test_client: fastapi.testclient.Test
 
 def test_get_next_sample(db: database.Database, test_client: fastapi.testclient.TestClient):
     sample_id = database.create_id()
-    db.add(
+    db.add_sample(
         database.Sample(
             sample_id,
             "text 1",
@@ -46,5 +46,5 @@ def db():
 
 @pytest.fixture
 def test_client(db):
-    app = server.create_app(db)
+    app = server.create_app(1, db)
     return fastapi.testclient.TestClient(app)

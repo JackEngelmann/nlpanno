@@ -7,7 +7,7 @@ router = fastapi.APIRouter()
 
 @router.get('/samples')
 def get_samples(db: database.Database = dependencies.DB):
-    all_samples = db.find_all()
+    all_samples = db.find_samples()
     return all_samples
 
 
@@ -16,9 +16,9 @@ def get_next_sample(
     db: database.Database = dependencies.DB,
     sampler: sampling.Sampler = dependencies.SAMPLER
 ):
-    not_labeled = db.find_all({ "text_class": None })
+    not_labeled = db.find_samples({ "text_class": None })
     if len(not_labeled) == 0:
         return None
 
     sample_id = sampler(not_labeled)
-    return db.get_id(sample_id)
+    return db.get_sample_by_id(sample_id)

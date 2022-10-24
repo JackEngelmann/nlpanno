@@ -30,7 +30,6 @@ def work(port: int):
     while True:
         print('Ping')
         sys.stdout.flush()
-        time.sleep(5)
         try:
             result = requests.get(f'http://127.0.0.1:{port}/samples')
             print(result.json())
@@ -38,3 +37,4 @@ def work(port: int):
         except Exception as err:
             print(err)
             sys.stdout.flush()
+        time.sleep(5)

@@ -1,16 +1,12 @@
 from typing import List, Tuple
-from nlpanno import database, taskconfig
+from nlpanno import database
 import pathlib
 import abc
 
 
 class DatasetBuilder:
     @abc.abstractmethod
-    def get_task_config(self) -> taskconfig.TextClassificationConfig:
-        raise NotImplementedError()
-    
-    @abc.abstractmethod
-    def fill_database(self, db: database.Database):
+    def build(self, db: database.Database):
         raise NotImplementedError()
     
 
@@ -45,9 +41,8 @@ class MtopBuilder(DatasetBuilder):
     def _format_text_class(original: str) -> str:
         return original[3:].replace('_', ' ').lower()
     
-    def get_task_config(self) -> taskconfig.TextClassificationConfig:
-        return taskconfig.TextClassificationConfig(self._text_classes)
-    
-    def fill_database(self, db: database.Database):
+    def build(self, db: database.Database):
         for sample in self._samples:
-            db.add(sample)
+            db.add_sample(sample)
+        task_config = database.TaskConfig(self._text_classes)
+        db.set_task_config(task_config)
