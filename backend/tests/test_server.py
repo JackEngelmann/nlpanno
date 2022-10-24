@@ -38,6 +38,77 @@ def test_get_next_sample(db: database.Database, test_client: fastapi.testclient.
     assert response.json()['id'] == sample_id
 
 
+@pytest.mark.parametrize("data, expected_response", [
+    (
+        {
+            "text": "updated text",
+        },
+        {
+            "id": "id",
+            "text": "updated text",
+            "text_class": "class",
+            "text_class_prediction": [0.1, 0.2],
+        },
+    ),
+    (
+        {
+            "text_class": "updated class",
+        },
+        {
+            "id": "id",
+            "text": "text",
+            "text_class": "updated class",
+            "text_class_prediction": [0.1, 0.2],
+        },
+    ),
+    (
+        {
+            "text_class": None,
+        },
+        {
+            "id": "id",
+            "text": "text",
+            "text_class": None,
+            "text_class_prediction": [0.1, 0.2],
+        },
+    ),
+    (
+        {
+            "text_class_prediction": [0.2, 0.3],
+        },
+        {
+            "id": "id",
+            "text": "text",
+            "text_class": "class",
+            "text_class_prediction": [0.2, 0.3],
+        },
+    ),
+    (
+        {
+            "text_class_prediction": None,
+        },
+        {
+            "id": "id",
+            "text": "text",
+            "text_class": "class",
+            "text_class_prediction": None,
+        },
+    ),
+])
+def test_patch_sample(data, expected_response, db: database.Database, test_client: fastapi.testclient.TestClient):
+    db.add_sample(
+        database.Sample(
+            "id",
+            "text",
+            "class",
+            [0.1, 0.2],
+        )
+    )
+    updated = test_client.patch(f'/samples/id', json=data)
+    assert updated.status_code == 200
+    assert updated.json() == expected_response
+
+
 
 @pytest.fixture()
 def db():

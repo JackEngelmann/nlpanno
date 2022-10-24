@@ -15,7 +15,8 @@ def create_id() -> Id:
 class Sample:
     id: Id
     text: str
-    text_class: Optional[str]
+    text_class: Optional[str] = None
+    text_class_prediction: Optional[Tuple[float, ...]] = None
 
 
 class FindCriteria(TypedDict, total=False):
@@ -86,7 +87,10 @@ class InMemoryDatabase(Database):
         return tuple(matches)
 
     def update_sample(self, sample: Sample) -> None:
+        # TODO: refactor
         for old_sample in self._samples:
             if old_sample.id == sample.id:
                 old_sample.text_class = sample.text_class
+                old_sample.text = sample.text
+                old_sample.text_class_prediction = sample.text_class_prediction
                 break
