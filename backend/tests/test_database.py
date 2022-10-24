@@ -1,4 +1,3 @@
-from os import stat
 from nlpanno import database
 import pytest
 
