@@ -1,0 +1,9 @@
+.container {
+    width: 25em;
+    height: 0.5em;
+}
+
+.bar {
+    height: 100%;
+    background-color: #3066BE;
+}

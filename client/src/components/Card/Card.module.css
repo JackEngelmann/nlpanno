@@ -1,0 +1,23 @@
+.root {
+    padding: 0.6em;
+    border-radius: 0.2em;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.2em;
+    width: 100%;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.selected {
+    composes: root;
+    background-color: #ddd;
+}
+
+.hover:hover {
+    background-color: #ddd;
+}

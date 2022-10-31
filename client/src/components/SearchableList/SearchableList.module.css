@@ -1,0 +1,29 @@
+.root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 0.5em;
+}
+
+.input {
+    flex: 0 0 auto;
+    border: none;
+    margin: 1em 0;
+    padding: 0.5em;
+    border-radius: 0.4em;
+    width: 100%;
+    font-size: 0.9em;
+}
+
+.input:focus {
+    outline: none;
+}
+
+.list {
+    flex: 1 1 auto;
+    overflow-y: scroll;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
