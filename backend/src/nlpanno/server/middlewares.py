@@ -1,6 +1,7 @@
 import fastapi
 import fastapi.middleware.cors
 
+
 def add_cors(app: fastapi.FastAPI):
     app.add_middleware(
         fastapi.middleware.cors.CORSMiddleware,

@@ -7,10 +7,11 @@ setup(
     install_requires=[
         "fastapi",
         "uvicorn[standard]",
+        "sentence-transformers"
     ],
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     extras_require={
-        "tests": ["pytest", "requests"]
+        "tests": ["pytest", "requests", "pytest-mock"]
     }
 )

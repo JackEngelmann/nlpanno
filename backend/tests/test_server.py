@@ -24,6 +24,14 @@ def test_get_samples(db: database.Database, test_client: fastapi.testclient.Test
     assert len(response.json()) == len(samples)
 
 
+def get_task_config(db: database.Database, test_client: fastapi.testclient.TestClient):
+    task_config = database.TaskConfig(("class 1", "class 2"))
+    db.set_task_config(task_config)
+    response = test_client.get('/taskConfig')
+    assert response.status_code == 200
+    assert response.json()['textClasses'] == ["class 1", "class 2"]
+
+
 def test_get_next_sample(db: database.Database, test_client: fastapi.testclient.TestClient):
     sample_id = database.create_id()
     db.add_sample(
@@ -46,52 +54,52 @@ def test_get_next_sample(db: database.Database, test_client: fastapi.testclient.
         {
             "id": "id",
             "text": "updated text",
-            "text_class": "class",
-            "text_class_prediction": [0.1, 0.2],
+            "textClass": "class",
+            "textClassPredictions": [0.1, 0.2],
         },
     ),
     (
         {
-            "text_class": "updated class",
+            "textClass": "updated class",
         },
         {
             "id": "id",
             "text": "text",
-            "text_class": "updated class",
-            "text_class_prediction": [0.1, 0.2],
+            "textClass": "updated class",
+            "textClassPredictions": [0.1, 0.2],
         },
     ),
     (
         {
-            "text_class": None,
+            "textClass": None,
         },
         {
             "id": "id",
             "text": "text",
-            "text_class": None,
-            "text_class_prediction": [0.1, 0.2],
+            "textClass": None,
+            "textClassPredictions": [0.1, 0.2],
         },
     ),
     (
         {
-            "text_class_prediction": [0.2, 0.3],
+            "textClassPredictions": [0.2, 0.3],
         },
         {
             "id": "id",
             "text": "text",
-            "text_class": "class",
-            "text_class_prediction": [0.2, 0.3],
+            "textClass": "class",
+            "textClassPredictions": [0.2, 0.3],
         },
     ),
     (
         {
-            "text_class_prediction": None,
+            "textClassPredictions": None,
         },
         {
             "id": "id",
             "text": "text",
-            "text_class": "class",
-            "text_class_prediction": None,
+            "textClass": "class",
+            "textClassPredictions": None,
         },
     ),
 ])
@@ -117,5 +125,9 @@ def db():
 
 @pytest.fixture
 def test_client(db):
-    app = server.create_app(1, db)
+    app = server.create_app(
+        db,
+        sampling.RandomSampler(),
+        lambda: None,
+    )
     return fastapi.testclient.TestClient(app)

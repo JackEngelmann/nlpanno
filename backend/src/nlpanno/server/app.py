@@ -1,27 +1,29 @@
+import functools
+from typing import Any, Callable
 import fastapi
 
-from nlpanno import database, sampling, worker
-from nlpanno.server import middlewares, routes, dependencies
+import nlpanno.worker
+from nlpanno import database, sampling
+from nlpanno.server import middlewares, requestcontext, routes
 
 
 def create_app(
-    port: int,
     db: database.Database,
-    sampler: sampling.Sampler = sampling.RandomSampler(),
+    sampler: sampling.Sampler,
+    handle_update: nlpanno.worker.UpdateHandler,
 ):
-    request_context_dependency = dependencies.create_request_context_dependency(
+    worker = nlpanno.worker.Worker(handle_update)
+    request_context = requestcontext.RequestContext(
         db,
         sampler,
+        worker,
     )
 
-    app = fastapi.FastAPI(
-        dependencies=[request_context_dependency],
-        on_startup=[
-            lambda: worker.start_worker(port)
-        ],
-        on_shutdown=[worker.stop_worker],
-    )
+    app = fastapi.FastAPI()
+    app.state.request_context = request_context
 
+    app.add_event_handler("startup", worker.start)
+    app.add_event_handler("shutdown", worker.end)
 
     middlewares.add_cors(app)
 
