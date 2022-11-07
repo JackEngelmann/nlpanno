@@ -1,16 +1,23 @@
-import fastapi
-from nlpanno import database, sampling, worker
+"""Implementation of dependencies common to all requests."""
+
 import dataclasses
+
+import fastapi
+
+from nlpanno import data, sampling, worker
 
 
 @dataclasses.dataclass
 class RequestContext:
-    db: database.Database
+    """Request context."""
+
+    database: data.Database
     sampler: sampling.Sampler
     worker: worker.Worker
 
 
-async def _get_request_context(request: fastapi.Request) -> database.Database:
+async def _get_request_context(request: fastapi.Request) -> data.Database:
+    """Get the request context from the app state."""
     return request.app.state.request_context
 
 

@@ -1,9 +1,15 @@
-import nlpanno.worker
+"""Test suit for the update worker."""
+# pylint: disable=wrong-import-order,import-error,duplicate-code
+
 import time
+
 import pytest_mock
+
+import nlpanno.worker
 
 
 def test_worker_no_update(mocker: pytest_mock.MockFixture):
+    """Test not triggering udpate."""
     update = mocker.MagicMock()
     worker = nlpanno.worker.Worker(update)
     worker.start()
@@ -13,6 +19,7 @@ def test_worker_no_update(mocker: pytest_mock.MockFixture):
 
 
 def test_worker_one_update(mocker: pytest_mock.MockFixture):
+    """Test trigering update once."""
     update = mocker.MagicMock()
     worker = nlpanno.worker.Worker(update)
     worker.start()
@@ -23,6 +30,7 @@ def test_worker_one_update(mocker: pytest_mock.MockFixture):
 
 
 def test_worker_two_updates(mocker: pytest_mock.MockFixture):
+    """Test triggering update twice."""
     update = mocker.MagicMock()
     worker = nlpanno.worker.Worker(update)
     worker.start()
@@ -35,6 +43,8 @@ def test_worker_two_updates(mocker: pytest_mock.MockFixture):
 
 
 def test_worker_skip_in_between(mocker: pytest_mock.MockFixture):
+    """Test that only the latest update is triggered."""
+
     def long_update():
         time.sleep(0.2)
 

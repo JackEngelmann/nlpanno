@@ -1,17 +1,18 @@
+"""Implementation of tasks running in the background (e.g. model training)."""
 import threading
-from turtle import update
 from typing import Callable
-
 
 UpdateHandler = Callable[[], None]
 
 
 class Worker:
+    """Worker triggering update when data changed."""
+
     def __init__(self, handle_update: UpdateHandler) -> None:
         self._new_data_event = threading.Event()
 
         self._thread = threading.Thread(
-            target=trigger_update_when_data_changed,
+            target=_trigger_update_when_data_updated,
             args=[
                 self._new_data_event,
                 handle_update,
@@ -20,20 +21,25 @@ class Worker:
         )
 
     def start(self):
+        """Start the worker."""
         self._thread.start()
-    
+
     def end(self):
+        """Cleanup when program is stopped."""
         # With the current implementation there is no cleanup necessary, because
         # the thread is a daemon (stops when main thread stops).
         # Cleanup might be necessary when implementation changes.
-        pass
 
     def notify_data_update(self):
+        """Method to notify the worker that data was updated."""
         # Set "new data" event to let the thread trigger the update handler.
         self._new_data_event.set()
 
 
-def trigger_update_when_data_changed(new_data_event: threading.Event, handle_update: UpdateHandler):
+def _trigger_update_when_data_updated(
+    new_data_event: threading.Event, handle_update: UpdateHandler
+):
+    """Trigger the update handler when data was updated."""
     while True:
         # Wait until "new data" event is set.
         new_data_event.wait()
@@ -47,4 +53,3 @@ def trigger_update_when_data_changed(new_data_event: threading.Event, handle_upd
 
         # Trigger the update handler.
         handle_update()
-

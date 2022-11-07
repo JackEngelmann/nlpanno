@@ -1,20 +1,21 @@
-import functools
-from typing import Any, Callable
+"""Implementation of the fastAPI app."""
+
 import fastapi
 
 import nlpanno.worker
-from nlpanno import database, sampling
+from nlpanno import data, sampling
 from nlpanno.server import middlewares, requestcontext, routes
 
 
 def create_app(
-    db: database.Database,
+    database: data.Database,
     sampler: sampling.Sampler,
     handle_update: nlpanno.worker.UpdateHandler,
-):
+) -> fastapi.FastAPI:
+    """Create the fastAPI app."""
     worker = nlpanno.worker.Worker(handle_update)
     request_context = requestcontext.RequestContext(
-        db,
+        database,
         sampler,
         worker,
     )
