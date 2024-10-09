@@ -1,4 +1,5 @@
 """Test suit for the update worker."""
+
 # pylint: disable=wrong-import-order,import-error,duplicate-code
 
 import time

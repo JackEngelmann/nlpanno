@@ -1,4 +1,5 @@
 """Test suite for data module."""
+
 import pytest
 
 from nlpanno import data

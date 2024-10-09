@@ -1,4 +1,5 @@
 """Implementation of tasks running in the background (e.g. model training)."""
+
 import threading
 from typing import Callable
 

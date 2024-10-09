@@ -1,4 +1,5 @@
 """Test suite for service."""
+
 # pylint: disable = redefined-outer-name
 from typing import Dict
 

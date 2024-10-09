@@ -83,7 +83,7 @@ class MeanEmbeddingUpdater:
 
     def _fill_embedding_by_id(self, samples: Tuple[data.Sample, ...]):
         """Write all sample embeddings into the cache."""
-        texts = tuple(s.text for s in samples)
+        texts = list(s.text for s in samples)
         embeddings = tuple(self._model.encode(texts, convert_to_tensor=True))
         self._embedding_by_id = {}
         for sample, embedding in zip(samples, embeddings):

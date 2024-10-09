@@ -1,4 +1,5 @@
 """Test suite for transfer objects."""
+
 import pytest
 
 from nlpanno import data
@@ -19,7 +20,7 @@ from nlpanno.server import transferobject
                 id="id",
                 text="text",
                 textClass="text class",
-                textClassPredictions=[0.1, 0.2],
+                textClassPredictions=(0.1, 0.2),
             ),
         ),
         (
@@ -50,7 +51,7 @@ from nlpanno.server import transferobject
                     id="id",
                     text="text",
                     textClass="text class",
-                    textClassPredictions=[0.1, 0.2],
+                    textClassPredictions=(0.1, 0.2),
                 )
             ],
         ),
@@ -74,7 +75,7 @@ from nlpanno.server import transferobject
         ),
         (
             data.TaskConfig(("class 1", "class 2")),
-            transferobject.TaskConfigDTO(textClasses=["class 1", "class 2"]),
+            transferobject.TaskConfigDTO(textClasses=("class 1", "class 2")),
         ),
     ],
 )

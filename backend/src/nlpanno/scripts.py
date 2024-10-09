@@ -1,4 +1,5 @@
 """Implementation of scripts."""
+
 # pylint: disable=invalid-name, wrong-import-order
 
 from typing import Optional

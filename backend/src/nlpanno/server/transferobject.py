@@ -1,7 +1,8 @@
 """Types and utilities for implementing the service/API."""
+
 # pylint: disable = too-few-public-methods
 import functools
-from typing import Any, List, Optional
+from typing import Any, Optional, Tuple
 
 import pydantic
 
@@ -14,7 +15,7 @@ class SampleDTO(pydantic.BaseModel, extra=pydantic.Extra.forbid):  # type: ignor
     id: str
     text: str
     textClass: Optional[str]
-    textClassPredictions: Optional[List[float]]
+    textClassPredictions: Optional[Tuple[float, ...]]
 
     @classmethod
     def from_domain_object(cls, domain_object: data.Sample):
@@ -30,7 +31,7 @@ class SampleDTO(pydantic.BaseModel, extra=pydantic.Extra.forbid):  # type: ignor
 class TaskConfigDTO(pydantic.BaseModel, extra=pydantic.Extra.forbid):  # type: ignore
     """Data transfer object for a task config."""
 
-    textClasses: List[str]
+    textClasses: Tuple[str, ...]
 
     @classmethod
     def from_domain_object(cls, domain_object: data.TaskConfig):
