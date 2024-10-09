@@ -22,7 +22,7 @@ class MeanEmbeddingUpdater:
         self._model = sentence_transformers.SentenceTransformer(model_name)
         self._initialized = True
 
-    def handle_update(self):
+    def __call__(self):
         """Make new predictions when the data was updated."""
         print("start update", flush=True)
         task_config = self._database.get_task_config()

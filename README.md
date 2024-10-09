@@ -40,17 +40,16 @@ The data for this example can be downloaded from https://fb.me/mtop_dataset. You
 
 You can also define your own way to fill the database.
 
-### Step 3: Define Active Learning Approach
+### Step 3: Setup Active Learning
 
 An active learning approach uses the information from the annotations you already did to help you with the annotations you still have to do.
 
 In `nlpanno`, this is implemented as a callback (`handle_update`) that is triggered when the user annotate a sample.
 Implementations can be found in `nlpanno.update`. Example:
 ```python
-mean_updater = meanembedding.MeanEmbeddingUpdater(
+handle_update = nlpanno.update.MeanEmbeddingUpdater(
     db, "distiluse-base-multilingual-cased-v1"
 )
-handle_update = mean_update.handle_update
 ```
 
 ### Step 4: Start the Server
