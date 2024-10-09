@@ -27,7 +27,7 @@ function App() {
   }
   return (
     <div className="App">
-      <div>
+      <div className="App__selector">
         <button onClick={() => setOffset(offset => offset + 1)} disabled={offset >= samples.length - 1}>
           Previous
         </button>
@@ -35,8 +35,11 @@ function App() {
           Next
         </button>
       </div>
-      {currentSample.text}
+      <div className="App__sample">
+        {currentSample.text}
+      </div>
       <ClassSelection
+        className="App__annotation"
         classPredictions={classPredictions}
         label={currentSample.textClass || undefined}
         onChange={label => {
