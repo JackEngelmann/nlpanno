@@ -1,7 +1,6 @@
 import { Card } from "../Card/Card";
 import { SearchableList } from "../SearchableList/SearchableList";
 import { ValueBar } from "../ValueBar/ValueBar";
-import styles from "./ClassSelection.module.css";
 
 type Props = {
   className?: string;
