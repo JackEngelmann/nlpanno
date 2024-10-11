@@ -120,6 +120,4 @@ class InMemoryDatabase(Database):
 
     def update_sample(self, sample: Sample) -> None:
         """Update a sample."""
-        # pylint: disable = fixme
-        # TODO: refactor
         self._sample_by_id[sample.id] = sample
