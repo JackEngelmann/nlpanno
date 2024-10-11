@@ -29,11 +29,11 @@ export function SearchableList<Item>(props: Props<Item>) {
   }, [items, text, doesMatch]);
 
   useEffect(() => {
-    if (selectedIndex > matchingItems.length - 1) {
-      setSelectedIndex(matchingItems.length - 1);
-    }
     if (selectedIndex < 0) {
       setSelectedIndex(0);
+    }
+    if (matchingItems.length > 1 && selectedIndex > matchingItems.length - 1) {
+      setSelectedIndex(matchingItems.length - 1);
     }
   }, [setSelectedIndex, selectedIndex, matchingItems]);
 
