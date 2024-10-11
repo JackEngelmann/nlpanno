@@ -6,7 +6,7 @@ type Props = {
   className?: string;
   classPredictions: {className: string, value: number}[];
   label: string | undefined;
-  onChange(label: string | undefined): void;
+  onChange(label: string): void;
 };
 
 export function ClassSelection(props: Props) {
