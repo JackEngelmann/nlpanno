@@ -23,22 +23,25 @@ function App() {
   const classPredictions = getSortedClassPredictions(currentSample, taskConfig)
   return (
     <div className={styles.root}>
-      <div className={styles.selector}>
-        <button
-          onClick={() => setOffset(offset => offset + 1)}
-          disabled={offset >= samples.length - 1}
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => setOffset(offset => offset - 1)}
-          disabled={offset <= 0}
-        >
-          Next
-        </button>
-      </div>
       <div className={styles.sample}>
-        {currentSample.text}
+        <div className={styles.text}>
+          {currentSample.text}
+        </div>
+        <div className={styles.selector}>
+          <button
+            onClick={() => setOffset(offset => offset + 1)}
+            disabled={offset >= samples.length - 1}
+          >
+            {"<"}
+          </button>
+          <span>{samples.length - offset} / {samples.length}</span>
+          <button
+            onClick={() => setOffset(offset => offset - 1)}
+            disabled={offset <= 0}
+          >
+            {">"}
+          </button>
+        </div>
       </div>
       <ClassSelection
         className={styles.annotation}
