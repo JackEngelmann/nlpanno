@@ -1,18 +1,19 @@
-.App {
+
+.root {
   display: flex;
   flex-direction: column;
   text-align: center;
   height: 100%;
 }
 
-.App__selector {
+.selector {
   flex: 0 0 auto;
 }
 
-.App__sample {
+.sample {
   flex: 0 0 auto;
 }
 
-.App__annotation {
+.annotation {
   flex: 1 1 auto;
 }

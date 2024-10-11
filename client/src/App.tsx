@@ -1,4 +1,4 @@
-import './App.css';
+import styles from "./App.module.css";
 import { Sample, TaskConfig, useSampleStream, useTaskConfig } from './api';
 import { ClassSelection } from './components/ClassSelection/ClassSelection';
 import { useState } from 'react';
@@ -22,8 +22,8 @@ function App() {
   const currentSample = samples[samples.length - 1 - offset]
   const classPredictions = getSortedClassPredictions(currentSample, taskConfig)
   return (
-    <div className="App">
-      <div className="App__selector">
+    <div className={styles.root}>
+      <div className={styles.selector}>
         <button
           onClick={() => setOffset(offset => offset + 1)}
           disabled={offset >= samples.length - 1}
@@ -37,11 +37,11 @@ function App() {
           Next
         </button>
       </div>
-      <div className="App__sample">
+      <div className={styles.sample}>
         {currentSample.text}
       </div>
       <ClassSelection
-        className="App__annotation"
+        className={styles.annotation}
         classPredictions={classPredictions}
         label={currentSample.textClass || undefined}
         onChange={label => {
