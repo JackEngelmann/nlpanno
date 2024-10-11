@@ -68,11 +68,10 @@ function reduce(state: State, action: Action): State {
     // of all values for "type" at **compile time**.
     assertNever(action)
 
-    throw Error("Unexpected action type")
+    return state
 }
 
 function assertNever(value: never) {
-    // This function is an utility
     throw new Error("Unexpected value: " + value);
 }
 
