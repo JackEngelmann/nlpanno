@@ -53,3 +53,9 @@
   max-width: 1200px;
   margin-bottom: 3em;
 }
+
+.loading, .error {
+  max-width: 1200px;
+  width: 100%;
+  padding: 2em;
+}

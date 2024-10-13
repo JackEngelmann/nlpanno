@@ -1,58 +1,45 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import styles from "./App.module.css";
-import { loadNextSample, loadTaskConfig, Sample, TaskConfig, updateSample } from './api';
+import { Sample, TaskConfig, useSampleStream, useTaskConfig } from './api';
 import { ClassSelection } from './components/ClassSelection/ClassSelection';
-import { useAppStateReducer } from "./appState";
+
 
 function App() {
-  const [state, dispatch] = useAppStateReducer()
+  const taskConfigState = useTaskConfig()
+  const sampleStream = useSampleStream()
 
-  // Initial Loading.
-  useEffect(() => {
-    console.log("initial loading")
-    loadNextSample()
-      .then(sample => dispatch({ "type": "loadedSample", sample }))
+  const [selectedSampleIdx, setSelectedSampleIdx] = useState(0)
+  const selectNextSample = () => setSelectedSampleIdx(selectedSampleIdx + 1)
+  const selectPreviousSample = () => setSelectedSampleIdx(selectedSampleIdx - 1)
 
-    loadTaskConfig()
-      .then(taskConfig => dispatch({ "type": "loadedTaskConfig", taskConfig }))
-  }, [dispatch])
+  const errorOccurred = taskConfigState.errorOccurred || sampleStream.errorOccurred
+  if (errorOccurred) return <ErrorScreen />
 
-  if (state.samples.length === 0 || !state.taskConfig) {
-    return <span>Loading</span>
-  }
+  const isLoading = taskConfigState.isLoading || sampleStream.isLoading
+  if (isLoading) return <LoadingScreen />
 
-  const isLastSample = state.currentIdx === state.samples.length - 1
-  const isFirstSample = state.currentIdx === 0
-  const currentSample = state.samples[state.currentIdx]
-  const classPredictions = getSortedClassPredictions(currentSample, state.taskConfig)
+  const taskConfig = taskConfigState.data!
+  const samples = sampleStream.data!
+  const isFirstSample = selectedSampleIdx === 0
+  const isLastSample = selectedSampleIdx === samples.length - 1
+  const selectedSample = samples[selectedSampleIdx]
+  const classPredictions = getSortedClassPredictions(selectedSample, taskConfig)
 
   async function onTextClassSelected(textClass: string) {
     // Update does not need to be awaited, can already move on to the next sample.
-    updateSample(currentSample.id, textClass)
-      .then(sample => dispatch({ type: "updatedSample", sample }))
-
-    if (isLastSample) {
-      const nextSample = await loadNextSample()
-      dispatch({ type: "loadedSample", sample: nextSample })
-    }
-
-    dispatch({ type: "selectedNextSample" })
+    sampleStream.patch({ id: selectedSample.id, textClass })
+    if (isLastSample) await sampleStream.loadNext()
+    selectNextSample()
   }
 
   function renderSampleSelector() {
     return (
       <div className={styles.selector}>
-        <button
-          onClick={() => dispatch({ type: "selectedPreviousSample" })}
-          disabled={isFirstSample}
-        >
+        <button onClick={selectPreviousSample} disabled={isFirstSample}>
           {"<"}
         </button>
-        <span>{state.currentIdx + 1} / {state.samples.length}</span>
-        <button
-          onClick={() => dispatch({ type: "selectedNextSample" })}
-          disabled={isLastSample}
-        >
+        <span>{selectedSampleIdx + 1} / {samples.length}</span>
+        <button onClick={selectNextSample} disabled={isLastSample}>
           {">"}
         </button>
       </div>
@@ -63,33 +50,56 @@ function App() {
     <div className={styles.root}>
       <div className={styles.sample}>
         <div className={styles.text}>
-          {currentSample.text}
+          {selectedSample.text}
         </div>
         {renderSampleSelector()}
       </div>
       <ClassSelection
         className={styles.annotation}
         classPredictions={classPredictions}
-        label={currentSample.textClass || undefined}
+        label={selectedSample.textClass || undefined}
         onChange={onTextClassSelected}
       />
     </div>
   );
 }
 
-function getSortedClassPredictions(sample: Sample, taskConfig: TaskConfig): { className: string, value: number }[] {
+type ClassPrediction = {
+  className: string,
+  value: number
+}
+
+function getSortedClassPredictions(sample: Sample, taskConfig: TaskConfig): ClassPrediction[] {
+  const classNames = taskConfig.textClasses
+
+  // If there are no predictions, score each class as 0.
   if (!sample.textClassPredictions) {
-    return taskConfig.textClasses.map(className => ({ className, value: 0 }))
+    return classNames.map(className => ({ className, value: 0 }))
   }
 
-  const textClassPredictions = taskConfig.textClasses.map((className, classIndex) => ({
+  const predictions = classNames.map((className, classIndex) => ({
     className,
     value: sample.textClassPredictions![classIndex]
   }))
-  console.log(textClassPredictions)
 
-  // Sort by value (confidence prediction) in descending order.
-  return textClassPredictions.sort((a, b) => b.value - a.value)
+  // Sort by prediction score in descending order.
+  return predictions.sort((a, b) => b.value - a.value)
+}
+
+function LoadingScreen() {
+  return (
+    <div className={styles.root}>
+      <div className={styles.loading}>Loading...</div>
+    </div>
+  )
+}
+
+function ErrorScreen() {
+  return (
+    <div className={styles.root}>
+      <div className={styles.error}>{"An Error occurred :("}</div>
+    </div>
+  )
 }
 
 export default App;
