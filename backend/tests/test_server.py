@@ -11,7 +11,7 @@ from nlpanno import data, sampling, server
 
 
 def test_get_samples(
-    database: data.Database, test_client: fastapi.testclient.TestClient
+    database: data.Database, client: fastapi.testclient.TestClient
 ):
     """Test getting samples."""
     samples = [
@@ -20,29 +20,29 @@ def test_get_samples(
     ]
     for sample in samples:
         database.add_sample(sample)
-    response = test_client.get("/samples")
+    response = client.get("/samples")
     assert response.status_code == 200
     assert len(response.json()) == len(samples)
 
 
 def get_task_config(
-    database: data.Database, test_client: fastapi.testclient.TestClient
+    database: data.Database, client: fastapi.testclient.TestClient
 ):
     """Test getting the task config."""
     task_config = data.TaskConfig(("class 1", "class 2"))
     database.set_task_config(task_config)
-    response = test_client.get("/taskConfig")
+    response = client.get("/taskConfig")
     assert response.status_code == 200
     assert response.json()["textClasses"] == ["class 1", "class 2"]
 
 
 def test_get_next_sample(
-    database: data.Database, test_client: fastapi.testclient.TestClient
+    database: data.Database, client: fastapi.testclient.TestClient
 ):
     """Test getting the next sample."""
     sample_id = data.create_id()
     database.add_sample(data.Sample(sample_id, "text 1", None))
-    response = test_client.get("/nextSample")
+    response = client.get("/nextSample")
     assert response.status_code == 200
     assert response.json()["id"] == sample_id
 
@@ -111,7 +111,7 @@ def test_patch_sample(
     input_data: Dict,
     expected_response,
     database: data.Database,
-    test_client: fastapi.testclient.TestClient,
+    client: fastapi.testclient.TestClient,
 ):
     """Test the patching (partial update) a sample."""
     sample = data.Sample(
@@ -121,7 +121,7 @@ def test_patch_sample(
         (0.1, 0.2),
     )
     database.add_sample(sample)
-    updated = test_client.patch(f"/samples/{sample.id}", json=input_data)
+    updated = client.patch(f"/samples/{sample.id}", json=input_data)
     assert updated.status_code == 200
     assert updated.json() == expected_response
 
@@ -133,7 +133,7 @@ def database():
 
 
 @pytest.fixture
-def test_client(database):
+def client(database):
     """Fixture for fastAPI test client."""
     app = server.create_app(
         database,
