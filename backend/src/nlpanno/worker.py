@@ -14,13 +14,7 @@ class Worker:
         self._is_working_event = threading.Event()
 
         self._thread = threading.Thread(
-            target=_trigger_update_when_data_updated,
-            args=[
-                self._new_data_event,
-                self._is_working_event,
-                handle_update,
-            ],
-            daemon=True,
+            target=self._run, args=(handle_update,), daemon=True,
         )
 
     def start(self) -> None:
@@ -43,28 +37,24 @@ class Worker:
         """Check if the worker is currently executing the update handler."""
         return self._is_working_event.is_set()
 
+    def _run(self, handle_update: UpdateHandler) -> None:
+        """Run the worker."""
+        while True:
+            # Wait until "new data" event is set.
+            self._new_data_event.wait()
 
-def _trigger_update_when_data_updated(
-    new_data_event: threading.Event,
-    is_working_event: threading.Event,
-    handle_update: UpdateHandler,
-) -> None:
-    """Trigger the update handler when data was updated."""
-    while True:
-        # Wait until "new data" event is set.
-        new_data_event.wait()
+            # Immediately clear it since it is being handled.
+            # When a change is made in the time handle_update runs, it will be
+            # immediately run after handle_update is done.
+            # When multiple changes happened in this time, only the last one will be
+            # reacted to.
+            self._new_data_event.clear()
 
-        # Immediately clear it since it is being handled.
-        # When a change is made in the time handle_update runs, it will be
-        # immediately run after handle_update is done.
-        # When multiple changes happened in this time, only the last one will be
-        # reacted to.
-        new_data_event.clear()
+            # Indicate that the worker is currently working.
+            self._is_working_event.set()
 
-        # Indicate that the worker is currently working.
-        is_working_event.set()
-        # Trigger the update handler.
-        handle_update()
+            # Trigger the update handler.
+            handle_update()
 
-        # Indicate that the worker has finished its task.
-        is_working_event.clear()
+            # Indicate that the worker has finished its task.
+            self._is_working_event.clear()
