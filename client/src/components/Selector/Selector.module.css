@@ -1,0 +1,24 @@
+.selector {
+  flex: 0 0 auto;
+  padding: 1em;
+  font-size: 0.9em;
+  user-select: none;
+}
+
+.selector > button {
+  margin: 0 0.5em;
+  padding: 0.2em 0.5em;
+  background-color: transparent;
+  border: 0;
+  font-weight: bold;
+  font-size: 1.2em;
+
+  &:hover {
+    background-color: #eee;
+    cursor: pointer;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    pointer-events: all !important;
+  }
+}

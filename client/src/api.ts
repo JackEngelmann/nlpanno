@@ -1,30 +1,17 @@
-import { error } from "console"
 import { useEffect, useState } from "react"
+import { Sample, TaskConfig, Status } from "./types"
 
-export type Sample = {
-    id: string
-    text: string
-    textClass: string | null
-    textClassPredictions: number[] | null
-}
-
-export type TaskConfig = {
-    textClasses: string[]
-}
-
-export type Status = {
-    worker: {
-        isWorking: boolean
-    }
-}
-
-export async function queryNextSample(): Promise<Sample> {
-    const result = await fetch("/nextSample")
+async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
+    const result = await fetch(url, options)
     if (!result.ok) {
         throw new Error(`Request failed (${result.status})`)
     }
     // TODO: could validate that result has expected format here.
     return await result.json()
+}
+
+export async function queryNextSample(): Promise<Sample> {
+    return await fetchJson<Sample>("/nextSample")
 }
 
 type PatchSampleInput = {
@@ -35,34 +22,19 @@ type PatchSampleInput = {
 }
 
 export async function mutateSample(patchInput: PatchSampleInput) {
-    const result = await fetch(`/samples/${patchInput.id}`, {
+    return await fetchJson<Sample>(`/samples/${patchInput.id}`, {
         method: "PATCH",
         body: JSON.stringify(patchInput),
         headers: { "Content-Type": "application/json" },
-    });
-    if (!result.ok) {
-        throw new Error(`Request failed (${result.status})`)
-    }
-    // TODO: could validate that result has expected format here.
-    return await result.json()
+    })
 }
 
 async function queryTaskConfig(): Promise<TaskConfig> {
-    const result = await fetch("/taskConfig")
-    if (!result.ok) {
-        throw new Error(`Request failed (${result.status})`)
-    }
-    // TODO: could validate that result has expected format here.
-    return await result.json()
+    return await fetchJson<TaskConfig>("/taskConfig")
 }
 
 async function queryStatus(): Promise<Status> {
-    const result = await fetch("/status")
-    if (!result.ok) {
-        throw new Error(`Request failed (${result.status})`)
-    }
-    // TODO: could validate that result has expected format here.
-    return await result.json()
+    return await fetchJson<Status>("/status")
 }
 
 type TaskConfigQueryResult = {
