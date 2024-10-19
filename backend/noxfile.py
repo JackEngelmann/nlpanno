@@ -2,36 +2,24 @@ import nox
 
 
 @nox.session
-def tests(session):
-    session.install(".[tests,develop]")
-    session.run("pytest")
+def ruff_check(session: nox.Session) -> None:
+	session.install(".[tests,develop]")
+	session.run("ruff", "check", "src/", "tests/")
 
 
 @nox.session
-def isort(session):
-    session.install(".[tests,develop]")
-    session.run("isort", ".")
-
-
-@nox.session()
-def black(session):
-    session.install(".[tests,develop]")
-    session.run("black", ".")
+def ruff_format(session: nox.Session) -> None:
+	session.install(".[tests,develop]")
+	session.run("ruff", "format", "src/", "tests/", "--check")
 
 
 @nox.session
-def flake8(session):
-    session.install(".[tests,develop]")
-    session.run("flake8", ".", "--max-line-length", "88")
+def tests(session: nox.Session) -> None:
+	session.install(".[tests,develop]")
+	session.run("pytest")
 
 
 @nox.session
-def mypy(session):
-    session.install(".[tests,develop]")
-    session.run("mypy", "src/", "tests/")
-
-
-@nox.session
-def pylint(session):
-    session.install(".[tests,develop]")
-    session.run("pylint", "src/", "tests/")
+def mypy(session: nox.Session) -> None:
+	session.install(".[tests,develop]")
+	session.run("mypy", "src/", "tests/")

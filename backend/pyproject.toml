@@ -15,11 +15,9 @@ dependencies = [
 [project.optional-dependencies]
 develop = [
     "pre-commit",
-    "isort",
     "black",
-    "flake8",
-    "pylint",
     "mypy",
+    "ruff",
 ]
 tests = [
     "httpx",
@@ -28,13 +26,25 @@ tests = [
     "pytest-mock",
 ]
 
-[tool.mypy]
-ignore_missing_imports = true
+[tool.ruff]
+line-length = 100
 
-[tool.pylint.TYPECHECK]
-# List of members which are set dynamically and missed by Pylint inference
-# system, and so shouldn't trigger E1101 when accessed.
-generated-members="numpy.*, torch.*, pydantic.*"
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle
+    "F",  # Pyflakes
+    "UP",  # pyupgrade
+    "B",  # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",  # isort
+    "ANN",  # annotation / type hints
+]
+ignore = [
+   "ANN101",  # Deprecated rule that checks that instance method self arguments have type annotations.
+   "ANN102",  # Deprecated rule that checks that class method cls arguments have type annotations.
+]
 
-[tool.pylint.'SIMILARITIES']
-ignore-imports=true
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+docstring-code-format = true

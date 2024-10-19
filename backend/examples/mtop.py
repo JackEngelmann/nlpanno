@@ -14,9 +14,7 @@ db = nlpanno.data.InMemoryDatabase()
 # The data for this example can be downloaded from https://fb.me/mtop_dataset.
 # You need to set the `data_path` to one of the subdirectories
 # (e.g. `.../de/` for German).
-mtop_data_path = pathlib.Path(
-    "/Users/jackengelmann/Documents/Repositories/nlpanno/data/mtop/de"
-)
+mtop_data_path = pathlib.Path("/Users/jackengelmann/Documents/Repositories/nlpanno/data/mtop/de")
 nlpanno.datasets.MtopBuilder(mtop_data_path, add_class_to_text=True).build(db)
 
 # 3. Setup active learning.
@@ -25,9 +23,7 @@ nlpanno.datasets.MtopBuilder(mtop_data_path, add_class_to_text=True).build(db)
 # Class predictions are made by comparing the embedding of a sample to the class
 # embeddings and calculating the similarity. The class predictions are saved in the
 # database.
-handle_update = nlpanno.update.MeanEmbeddingUpdater(
-    db, "distiluse-base-multilingual-cased-v1"
-)
+handle_update = nlpanno.update.MeanEmbeddingUpdater(db, "distiluse-base-multilingual-cased-v1")
 
 # 4. Start server (backend).
 nlpanno.scripts.start_server(db, handle_update=handle_update)
