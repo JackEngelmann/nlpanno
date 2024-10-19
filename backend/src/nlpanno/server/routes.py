@@ -3,9 +3,11 @@
 import dataclasses
 
 import fastapi
+import fastapi.staticfiles
+import fastapi.templating
 
 from nlpanno import data
-from nlpanno.server import requestcontext, status, transferobject, types
+from nlpanno.server import requestcontext, status, transferobject, types, static
 
 router = fastapi.APIRouter()
 
@@ -74,3 +76,9 @@ def get_status(
 	worker_status = request_context.worker.get_status()
 	app_status = status.Status(worker_status)
 	return transferobject.StatusDTO.from_domain_object(app_status)
+
+
+@router.get("/{rest_of_path:path}")  # This catches all routes not defined above.
+async def serve_main_html_page(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
+	"""Serve the main HTML page."""
+	return static.create_main_page_html_response(request)

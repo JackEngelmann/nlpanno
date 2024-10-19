@@ -16,6 +16,7 @@ def start_server(
 	database: nlpanno.data.Database,
 	sampler: Optional[nlpanno.sampling.Sampler] = None,
 	handle_update: Optional[nlpanno.worker.UpdateHandler] = None,
+	port: int = 8000,
 ) -> None:
 	"""Start a server for annotation."""
 	global app
@@ -26,7 +27,7 @@ def start_server(
 		sampler = nlpanno.sampling.RandomSampler()
 
 	app = nlpanno.server.create_app(database, sampler, handle_update)
-	uvicorn.run("nlpanno.scripts:app", log_config=None)
+	uvicorn.run("nlpanno.scripts:app", log_config=None, port=port)
 
 
 def do_nothing() -> None:

@@ -9,6 +9,17 @@ nlpanno is an annotation tool for NLP tasks focused on annotation efficiency and
 **Extensibility.** For large annotation tasks, it makes sense to invest time in optimizing the annotation process for the concrete task or use case. Even with extensive configuration options, there often comes a point where you run into limitations. nlpanno is designed to be extendible. If none of the existing implementations fit, it should be easy to create your own.
 Supported NLP Tasks. Currently, nlpanno focuses on the annotation for text classification tasks.
 
+## Installation
+
+Build the frontend:
+1. `cd client` - navigate to the frontend directory
+2. `npm install` - install dependencies
+3. `npm run build` - build the frontend
+
+Install the backend:
+1. `cd backend` - navigate to the backend directory
+2. `pip install .` - install `nlpanno` package
+
 ## Get started
 
 The core concept of `nlpanno` is to implement a new server for each annotation task. 
@@ -49,14 +60,12 @@ handle_update = nlpanno.update.MeanEmbeddingUpdater(
 
 ### Step 4: Start the Server
 
-Finally, you can start the server (backend):
+Finally, you can start the server:
 ```python
 nlpanno.scripts.start_server(db, handle_update=handle_update)
 ```
 
-At the moment, the client applictation (frontend) needs to be started separately with `cd client && npm run start`.
-
-You should see the annotation tool in the browser now on `http://localhost:3000/`.
+You should see the annotation tool in the browser now on `http://localhost:8000/`.
 
 ## Disclaimer
 
