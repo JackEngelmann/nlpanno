@@ -1,21 +1,22 @@
 import { useState } from "react";
 import styles from "./App.module.css";
-import { Sample, TaskConfig, useSampleStream, useTaskConfig } from './api';
+import { Sample, TaskConfig, useSampleStream, useTaskConfig, useStatus } from './api';
 import { ClassSelection } from './components/ClassSelection/ClassSelection';
-
+import { StatusIndicator } from "./components/StatusIndicator/StatusIndicator";
 
 function App() {
   const taskConfigState = useTaskConfig()
   const sampleStream = useSampleStream()
+  const statusQueryResult = useStatus(1000)
 
   const [selectedSampleIdx, setSelectedSampleIdx] = useState(0)
   const selectNextSample = () => setSelectedSampleIdx(selectedSampleIdx + 1)
   const selectPreviousSample = () => setSelectedSampleIdx(selectedSampleIdx - 1)
 
-  const errorOccurred = taskConfigState.errorOccurred || sampleStream.errorOccurred
+  const errorOccurred = taskConfigState.errorOccurred || sampleStream.errorOccurred || statusQueryResult.errorOccurred
   if (errorOccurred) return <ErrorScreen />
 
-  const isLoading = taskConfigState.isLoading || sampleStream.isLoading
+  const isLoading = taskConfigState.isLoading || sampleStream.isLoading || statusQueryResult.isLoading
   if (isLoading) return <LoadingScreen />
 
   const taskConfig = taskConfigState.data!
@@ -52,6 +53,7 @@ function App() {
         <div className={styles.text}>
           {selectedSample.text}
         </div>
+        <StatusIndicator isWorking={statusQueryResult.data!.worker.isWorking} />
         {renderSampleSelector()}
       </div>
       <ClassSelection

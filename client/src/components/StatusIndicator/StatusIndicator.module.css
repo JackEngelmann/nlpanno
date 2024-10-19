@@ -1,0 +1,27 @@
+.root {
+    height: 1em;
+    width: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.working > .bar {
+    animation: spin 2s linear infinite;
+    background-color: black;
+}
+
+.bar {
+    background-color: black;
+    height: 0.1em;
+    width: 1em;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

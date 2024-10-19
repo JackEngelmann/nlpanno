@@ -12,6 +12,12 @@ export type TaskConfig = {
     textClasses: string[]
 }
 
+export type Status = {
+    worker: {
+        isWorking: boolean
+    }
+}
+
 export async function queryNextSample(): Promise<Sample> {
     const result = await fetch("/nextSample")
     if (!result.ok) {
@@ -43,6 +49,15 @@ export async function mutateSample(patchInput: PatchSampleInput) {
 
 async function queryTaskConfig(): Promise<TaskConfig> {
     const result = await fetch("/taskConfig")
+    if (!result.ok) {
+        throw new Error(`Request failed (${result.status})`)
+    }
+    // TODO: could validate that result has expected format here.
+    return await result.json()
+}
+
+async function queryStatus(): Promise<Status> {
+    const result = await fetch("/status")
     if (!result.ok) {
         throw new Error(`Request failed (${result.status})`)
     }
@@ -131,6 +146,37 @@ export function useSampleStream(): SampleStreamResult {
         loadNext,
         patch,
         isLoading: samples.length === 0,
+        errorOccurred
+    }
+}
+
+type StatusQueryResult = {
+    data: Status | null
+    isLoading: boolean,
+    errorOccurred: boolean
+}
+
+export function useStatus(pollIntervalMs: number): StatusQueryResult {
+    const [status, setStatus] = useState<Status | null>(null)
+    const [errorOccurred, setErrorOccurred] = useState(false)
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const newStatus = await queryStatus()
+                if (JSON.stringify(status) !== JSON.stringify(newStatus)) {
+                    setStatus(newStatus)
+                }
+            } catch {
+                setErrorOccurred(true)
+            }
+        }, pollIntervalMs)
+        return () => clearInterval(interval)
+    }, [setStatus])
+
+    return {
+        data: status,
+        isLoading: !status,
         errorOccurred
     }
 }
