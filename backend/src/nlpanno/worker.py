@@ -4,6 +4,9 @@ import dataclasses
 import threading
 from typing import Callable
 
+import logging
+_LOGGER = logging.getLogger("nlpanno")
+
 UpdateHandler = Callable[[], None]
 
 
@@ -61,8 +64,10 @@ class Worker:
 			# Indicate that the worker is currently working.
 			self._is_working_event.set()
 
+			_LOGGER.info("Triggering update handler")
 			# Trigger the update handler.
 			handle_update()
+			_LOGGER.info("Update handler finished")
 
 			# Indicate that the worker has finished its task.
 			self._is_working_event.clear()

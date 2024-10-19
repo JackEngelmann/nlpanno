@@ -7,6 +7,8 @@ name = "nlpanno"
 requires-python = ">= 3.9"
 version="0.0.1"
 dependencies = [
+    "asgi_correlation_id",
+    "colorlog",
     "fastapi",
     "pydantic >= 2.0",
     "sentence-transformers",
