@@ -19,10 +19,7 @@ class SamplePatch(pydantic.BaseModel):
 	text_class: Optional[str] = None
 	text_class_predictions: Optional[tuple[float, ...]] = None
 
-	class Config:
-		"""Pydantic config."""
-
-		# The alias is used so that the API is in camel case,
-		# but the python code is in the usual casing
-		# (lowercase, separated by underscores).
-		alias_generator = to_camel
+	# The alias is used so that the API is in camel case,
+	# but the python code is in the usual casing
+	# (lowercase, separated by underscores).
+	model_config = pydantic.ConfigDict(alias_generator=to_camel)

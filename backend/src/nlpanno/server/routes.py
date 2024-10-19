@@ -56,7 +56,7 @@ def patch_sample(
 	# Since some fields of Sample are Optional and PATCH allows partial updates,
 	# it is distinguished between fields that were not given (-> don't update)
 	# and fields that were given as None (-> set to None).
-	update_dict = sample_patch.dict(exclude_unset=True)
+	update_dict = sample_patch.model_dump(exclude_unset=True)
 	new_dict = {**old_dict, **update_dict}
 
 	updated_sample = data.Sample(**new_dict)

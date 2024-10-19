@@ -14,7 +14,7 @@ class StatusDTO(pydantic.BaseModel):
 	is_working: bool = pydantic.Field(serialization_alias="isWorking")
 
 
-class SampleDTO(pydantic.BaseModel, extra=pydantic.Extra.forbid):  # type: ignore
+class SampleDTO(pydantic.BaseModel):
 	"""Data transfer object for a sample."""
 
 	id: str
@@ -25,7 +25,7 @@ class SampleDTO(pydantic.BaseModel, extra=pydantic.Extra.forbid):  # type: ignor
 	)
 
 
-class TaskConfigDTO(pydantic.BaseModel, extra=pydantic.Extra.forbid):  # type: ignore
+class TaskConfigDTO(pydantic.BaseModel):
 	"""Data transfer object for a task config."""
 
 	text_classes: tuple[str, ...] = pydantic.Field(serialization_alias="textClasses")

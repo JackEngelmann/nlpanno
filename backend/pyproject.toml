@@ -7,15 +7,15 @@ name = "nlpanno"
 requires-python = ">= 3.9"
 version="0.0.1"
 dependencies = [
-  "fastapi",
-  "uvicorn[standard]",
-  "sentence-transformers",
+    "fastapi",
+    "pydantic >= 2.0",
+    "sentence-transformers",
+    "uvicorn[standard]",
 ]
 
 [project.optional-dependencies]
 develop = [
     "pre-commit",
-    "black",
     "mypy",
     "ruff",
 ]
