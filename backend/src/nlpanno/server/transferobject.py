@@ -1,20 +1,47 @@
 """Types and utilities for implementing the service/API."""
 
-import functools
 from typing import Any, Optional
 
 import pydantic
 
 from nlpanno import data, worker
+from nlpanno.server import status
 
 
-class StatusDTO(pydantic.BaseModel):
-	"""Data transfer object for the status of the server."""
+class BaseDTO(pydantic.BaseModel):
+	"""Base data transfer object."""
+
+	model_config = pydantic.ConfigDict(frozen=True)
+
+	@classmethod
+	def from_domain_object(cls, domain_object: Any) -> "BaseDTO":  # noqa: ANN401
+		"""Create a data transfer object from a domain object."""
+		raise NotImplementedError("Subclasses must implement this method.")
+
+
+class WorkerStatusDTO(BaseDTO):
+	"""Data transfer object for the status of the worker."""
 
 	is_working: bool = pydantic.Field(serialization_alias="isWorking")
 
+	@classmethod
+	def from_domain_object(cls, domain_object: worker.WorkerStatus) -> "WorkerStatusDTO":
+		"""Create a data transfer object from a domain object."""
+		return cls(is_working=domain_object.is_working)
 
-class SampleDTO(pydantic.BaseModel):
+
+class StatusDTO(BaseDTO):
+	"""Data transfer object for the status of the server."""
+
+	worker: WorkerStatusDTO = pydantic.Field(serialization_alias="worker")
+
+	@classmethod
+	def from_domain_object(cls, domain_object: status.Status) -> "StatusDTO":
+		"""Create a data transfer object from a domain object."""
+		return cls(worker=WorkerStatusDTO.from_domain_object(domain_object.worker))
+
+
+class SampleDTO(BaseDTO):
 	"""Data transfer object for a sample."""
 
 	id: str
@@ -24,49 +51,23 @@ class SampleDTO(pydantic.BaseModel):
 		serialization_alias="textClassPredictions"
 	)
 
+	@classmethod
+	def from_domain_object(cls, domain_object: data.Sample) -> "SampleDTO":
+		"""Create a data transfer object from a domain object."""
+		return cls(
+			id=domain_object.id,
+			text=domain_object.text,
+			text_class=domain_object.text_class,
+			text_class_predictions=domain_object.text_class_predictions,
+		)
 
-class TaskConfigDTO(pydantic.BaseModel):
+
+class TaskConfigDTO(BaseDTO):
 	"""Data transfer object for a task config."""
 
 	text_classes: tuple[str, ...] = pydantic.Field(serialization_alias="textClasses")
 
-
-@functools.singledispatch
-def to_dto(domain_object: Any) -> Any:  # noqa: ANN401
-	"""Transform domain objects to data transfer objects."""
-	raise TypeError(f"type {type(domain_object)} it not supported by the 'to_dto' function.")
-
-
-@to_dto.register
-def _(domain_object: data.Sample) -> SampleDTO:
-	"""Transform a sample."""
-	return SampleDTO(
-		id=domain_object.id,
-		text=domain_object.text,
-		text_class=domain_object.text_class,
-		text_class_predictions=domain_object.text_class_predictions,
-	)
-
-
-@to_dto.register
-def _(domain_object: data.TaskConfig) -> TaskConfigDTO:
-	"""Transform a task config."""
-	return TaskConfigDTO(text_classes=domain_object.text_classes)
-
-
-@to_dto.register
-def _(domain_object: worker.WorkerStatus) -> StatusDTO:
-	"""Transform a worker status."""
-	return StatusDTO(is_working=domain_object.is_working)
-
-
-@to_dto.register
-def _(domain_object: tuple) -> list:
-	"""Transform a tuple."""
-	return list(to_dto(d) for d in domain_object)
-
-
-@to_dto.register
-def _(domain_object: list) -> list:
-	"""Transform a list."""
-	return list(to_dto(d) for d in domain_object)
+	@classmethod
+	def from_domain_object(cls, domain_object: data.TaskConfig) -> "TaskConfigDTO":
+		"""Create a data transfer object from a domain object."""
+		return cls(text_classes=domain_object.text_classes)

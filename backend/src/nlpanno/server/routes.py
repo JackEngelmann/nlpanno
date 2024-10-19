@@ -5,19 +5,18 @@ import dataclasses
 import fastapi
 
 from nlpanno import data
-from nlpanno.server import requestcontext, transferobject, types
-from nlpanno.server.transferobject import to_dto
+from nlpanno.server import requestcontext, status, transferobject, types
 
 router = fastapi.APIRouter()
 
 
-@router.get("/samples", response_model=list[transferobject.SampleDTO])
+@router.get("/samples")
 def get_samples(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> list[transferobject.SampleDTO]:
 	"""Get all samples."""
 	all_samples = request_context.database.find_samples()
-	return to_dto(all_samples)
+	return [transferobject.SampleDTO.from_domain_object(sample) for sample in all_samples]
 
 
 @router.get("/taskConfig", response_model=transferobject.TaskConfigDTO)
@@ -26,7 +25,7 @@ def get_task_config(
 ) -> transferobject.TaskConfigDTO:
 	"""Get the task config."""
 	task_config = request_context.database.get_task_config()
-	return to_dto(task_config)
+	return transferobject.TaskConfigDTO.from_domain_object(task_config)
 
 
 @router.get("/nextSample")
@@ -40,7 +39,7 @@ def get_next_sample(
 
 	sample_id = request_context.sampler(not_labeled)
 	sample = request_context.database.get_sample_by_id(sample_id)
-	return to_dto(sample)
+	return transferobject.SampleDTO.from_domain_object(sample)
 
 
 @router.patch("/samples/{sample_id}")
@@ -58,16 +57,13 @@ def patch_sample(
 	# and fields that were given as None (-> set to None).
 	update_dict = sample_patch.model_dump(exclude_unset=True)
 	new_dict = {**old_dict, **update_dict}
-
 	updated_sample = data.Sample(**new_dict)
 	request_context.database.update_sample(updated_sample)
 
-	# TODO: Do this always on db update? e.g. register like an
-	#  event listener?
 	request_context.worker.notify_data_update()
 
 	sample = request_context.database.get_sample_by_id(sample_id)
-	return to_dto(sample)
+	return transferobject.SampleDTO.from_domain_object(sample)
 
 
 @router.get("/status")
@@ -76,4 +72,5 @@ def get_status(
 ) -> transferobject.StatusDTO:
 	"""Get the status of the server."""
 	worker_status = request_context.worker.get_status()
-	return to_dto(worker_status)
+	app_status = status.Status(worker_status)
+	return transferobject.StatusDTO.from_domain_object(app_status)

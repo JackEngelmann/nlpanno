@@ -121,7 +121,7 @@ def test_get_status(database: data.Database, client: fastapi.testclient.TestClie
 	"""Test getting the status of the server."""
 	response = client.get("/status")
 	assert response.status_code == 200
-	assert response.json()["isWorking"] is False
+	assert response.json()["worker"]["isWorking"] is False
 
 
 @pytest.fixture()
