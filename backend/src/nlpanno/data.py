@@ -1,6 +1,7 @@
 """Module implementing data types and databases."""
 
 import abc
+import copy
 import dataclasses
 import uuid
 from typing import Optional, TypedDict
@@ -96,7 +97,7 @@ class InMemoryDatabase(Database):
 		sample = self._sample_by_id.get(id_)
 		if sample is None:
 			raise ValueError(f"No sample with id {id_}")
-		return sample
+		return copy.deepcopy(sample)
 
 	def find_samples(self, criteria: Optional[SampleFindCriteria] = None) -> tuple[Sample, ...]:
 		"""Find samples given the criteria."""
@@ -108,7 +109,7 @@ class InMemoryDatabase(Database):
 				"text_class" not in criteria or sample.text_class == criteria["text_class"]
 			)
 			if text_class_matches:
-				matches.append(sample)
+				matches.append(copy.deepcopy(sample))
 		return tuple(matches)
 
 	def update_sample(self, sample: Sample) -> None:

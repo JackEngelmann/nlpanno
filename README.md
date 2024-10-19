@@ -30,9 +30,8 @@ Next, you need to fill the database with the information needed for the annotati
 
 You can use your own data or use a pre-defined dataset from `nlpanno.datasets`. Example:
 ```python
-data_path = pathlib.Path("path/to/data")
-builder = nlpanno.datasets.MtopBuilder(data_path)
-builder.build(db)
+dataset = nlpanno.datasets.MTOP("/path/to/data")
+dataset.fill_database(db)
 ```
 
 > [!NOTE]  
