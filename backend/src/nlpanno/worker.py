@@ -1,10 +1,10 @@
 """Implementation of tasks running in the background (e.g. model training)."""
 
 import dataclasses
+import logging
 import threading
 from typing import Callable
 
-import logging
 _LOGGER = logging.getLogger("nlpanno")
 
 UpdateHandler = Callable[[], None]
