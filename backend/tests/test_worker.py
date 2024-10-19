@@ -62,3 +62,25 @@ def test_worker_skip_in_between(mocker: pytest_mock.MockFixture):
     worker.end()
     time.sleep(0.3)
     assert update.call_count == 2
+
+
+def test_is_working(mocker: pytest_mock.MockFixture) -> None:
+    """Test the is_working property."""
+    def long_update():
+        time.sleep(0.2)
+
+    update = mocker.MagicMock(wraps=long_update)
+    worker = nlpanno.worker.Worker(update)
+    worker.start()
+    assert not worker.is_working
+
+    # Start working.
+    worker.notify_data_update()
+
+    # Is working.
+    time.sleep(0.1)
+    assert worker.is_working
+
+    # Is finished.
+    time.sleep(0.2)
+    assert not worker.is_working
