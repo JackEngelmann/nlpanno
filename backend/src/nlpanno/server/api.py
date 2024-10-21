@@ -77,8 +77,3 @@ def get_status(
 	app_status = status.Status(worker_status)
 	return transferobject.StatusDTO.from_domain_object(app_status)
 
-
-@router.get("/{rest_of_path:path}")  # This catches all routes not defined above.
-async def serve_main_html_page(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
-	"""Serve the main HTML page."""
-	return static.create_main_page_html_response(request)

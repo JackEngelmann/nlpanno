@@ -5,7 +5,7 @@ import pathlib
 
 _BUILD_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent / "client" / "build"
 _TEMPLATES_DIR = _BUILD_DIR
-_STATIC_DIR = _BUILD_DIR / "static"
+_STATIC_DIR = _BUILD_DIR / "assets"
 _MAIN_PAGE_FILENAME = "index.html"
 _TEMPLATES = fastapi.templating.Jinja2Templates(directory=_TEMPLATES_DIR)
 
@@ -17,4 +17,13 @@ def create_main_page_html_response(request: fastapi.Request) -> fastapi.response
 
 def mount_static_files(app: fastapi.FastAPI) -> None:
 	"""Mount the static files."""
-	app.mount("/static", fastapi.staticfiles.StaticFiles(directory=_STATIC_DIR), name="static")
+	app.mount("/assets", fastapi.staticfiles.StaticFiles(directory=_STATIC_DIR), name="static")
+
+
+router = fastapi.APIRouter()
+
+
+@router.get("/")
+async def serve_main_html_page(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
+	"""Serve the main HTML page."""
+	return create_main_page_html_response(request)

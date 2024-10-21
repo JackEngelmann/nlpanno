@@ -6,7 +6,7 @@ import fastapi.templating
 import nlpanno.server.logging
 import nlpanno.worker
 from nlpanno import data, sampling
-from nlpanno.server import middlewares, requestcontext, routes, static
+from nlpanno.server import api, middlewares, requestcontext, static
 
 
 def create_app(
@@ -31,6 +31,7 @@ def create_app(
 
 	middlewares.add_middlewares(app)
 	static.mount_static_files(app)
-	app.include_router(routes.router)
+	app.include_router(api.router)
+	app.include_router(static.router)
 
 	return app
