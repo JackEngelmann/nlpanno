@@ -9,7 +9,7 @@ import fastapi.templating
 from nlpanno import data
 from nlpanno.server import requestcontext, status, transferobject, types, static
 
-router = fastapi.APIRouter()
+router = fastapi.APIRouter(prefix="/api")
 
 
 @router.get("/samples")

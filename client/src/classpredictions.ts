@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { Sample, TaskConfig } from "./api";
+import { Sample, TaskConfig } from "./types";
 
 type ClassPrediction = {
     className: string,

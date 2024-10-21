@@ -11,7 +11,7 @@ import { getSortedClassPredictions } from "./classpredictions";
 function App() {
   const taskConfigState = useTaskConfig()
   const sampleStream = useSampleStream()
-  const statusQueryResult = useStatus(1000)
+  const statusQueryResult = useStatus(10000)
 
   const [selectedSampleIdx, setSelectedSampleIdx] = useState(0)
   const selectNextSample = () => setSelectedSampleIdx(selectedSampleIdx + 1)
@@ -31,10 +31,10 @@ function App() {
   const classPredictions = getSortedClassPredictions(selectedSample, taskConfig)
 
   async function onTextClassSelected(textClass: string) {
-    // Update does not need to be awaited, can already move on to the next sample.
-    sampleStream.patch({ id: selectedSample.id, textClass })
     if (isLastSample) await sampleStream.loadNext()
     selectNextSample()
+    const updatedSample = { ...selectedSample, textClass }
+    await sampleStream.update(updatedSample)
   }
 
   return (
@@ -54,6 +54,7 @@ function App() {
         />
       </div>
       <ClassSelection
+        key={selectedSample.id}
         className={styles.annotation}
         classPredictions={classPredictions}
         label={selectedSample.textClass || undefined}

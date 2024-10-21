@@ -11,30 +11,23 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export async function queryNextSample(): Promise<Sample> {
-    return await fetchJson<Sample>("/nextSample")
+    return await fetchJson<Sample>("/api/nextSample")
 }
 
-type PatchSampleInput = {
-    id: string,
-    text?: string
-    textClass?: string | null
-    textClassPredictions?: number[] | null
-}
-
-export async function mutateSample(patchInput: PatchSampleInput) {
-    return await fetchJson<Sample>(`/samples/${patchInput.id}`, {
+export async function mutateSample(sample: Sample) {
+    return await fetchJson<Sample>(`/api/samples/${sample.id}`, {
         method: "PATCH",
-        body: JSON.stringify(patchInput),
+        body: JSON.stringify(sample),
         headers: { "Content-Type": "application/json" },
     })
 }
 
 async function queryTaskConfig(): Promise<TaskConfig> {
-    return await fetchJson<TaskConfig>("/taskConfig")
+    return await fetchJson<TaskConfig>("/api/taskConfig")
 }
 
 async function queryStatus(): Promise<Status> {
-    return await fetchJson<Status>("/status")
+    return await fetchJson<Status>("/api/status")
 }
 
 type TaskConfigQueryResult = {
@@ -73,7 +66,7 @@ type SampleStreamResult = {
     isLoading: boolean,
     errorOccurred: boolean
     loadNext(): Promise<void>
-    patch(patchInput: PatchSampleInput): Promise<void>
+    update(sample: Sample): Promise<void>
 }
 
 export function useSampleStream(): SampleStreamResult {
@@ -89,10 +82,10 @@ export function useSampleStream(): SampleStreamResult {
         }
     }
 
-    async function patch(patchInput: PatchSampleInput) {
+    async function update(sample: Sample) {
         try {
-            const mutated = await mutateSample(patchInput)
-            setSamples(samples => samples.map(s => s.id === patchInput.id ? mutated : s))
+            const mutated = await mutateSample(sample)
+            setSamples(samples => samples.map(s => s.id === sample.id ? mutated : s))
         } catch {
             setErrorOccurred(true)
         }
@@ -116,7 +109,7 @@ export function useSampleStream(): SampleStreamResult {
     return {
         data: samples,
         loadNext,
-        patch,
+        update,
         isLoading: samples.length === 0,
         errorOccurred
     }
