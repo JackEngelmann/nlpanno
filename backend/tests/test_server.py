@@ -13,32 +13,36 @@ _NEXT_SAMPLE_ENDPOINT = "/api/nextSample"
 _STATUS_ENDPOINT = "/api/status"
 
 
-def test_get_samples(database: data.Database, client: fastapi.testclient.TestClient) -> None:
+def test_get_samples() -> None:
 	"""Test getting samples."""
 	samples = [
 		data.Sample(data.create_id(), "text 1", None),
 		data.Sample(data.create_id(), "text 2", None),
 	]
-	for sample in samples:
-		database.add_sample(sample)
+	task_config = data.TaskConfig(())
+	database = data.InMemoryDatabase(task_config, samples)
+	client = create_client(database)
 	response = client.get(_SAMPLES_ENDPOINT)
 	assert response.status_code == 200
 	assert len(response.json()) == len(samples)
 
 
-def get_task_config(database: data.Database, client: fastapi.testclient.TestClient) -> None:
+def get_task_config() -> None:
 	"""Test getting the task config."""
 	task_config = data.TaskConfig(("class 1", "class 2"))
-	database.set_task_config(task_config)
+	database = data.InMemoryDatabase(task_config, ())
+	client = create_client(database)
 	response = client.get(_TASK_CONFIG_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["textClasses"] == ["class 1", "class 2"]
 
 
-def test_get_next_sample(database: data.Database, client: fastapi.testclient.TestClient) -> None:
+def test_get_next_sample() -> None:
 	"""Test getting the next sample."""
 	sample_id = data.create_id()
-	database.add_sample(data.Sample(sample_id, "text 1", None))
+	task_config = data.TaskConfig(())
+	database = data.InMemoryDatabase(task_config, (data.Sample(sample_id, "text 1", None),))
+	client = create_client(database)
 	response = client.get(_NEXT_SAMPLE_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["id"] == sample_id
@@ -107,8 +111,6 @@ def test_get_next_sample(database: data.Database, client: fastapi.testclient.Tes
 def test_patch_sample(
 	input_data: dict,
 	expected_response: dict,
-	database: data.Database,
-	client: fastapi.testclient.TestClient,
 ) -> None:
 	"""Test the patching (partial update) a sample."""
 	sample = data.Sample(
@@ -117,23 +119,31 @@ def test_patch_sample(
 		"class",
 		(0.1, 0.2),
 	)
-	database.add_sample(sample)
+	task_config = data.TaskConfig(("class",))
+	database = data.InMemoryDatabase(task_config, (sample,))
+	client = create_client(database)
 	updated = client.patch(f"{_SAMPLES_ENDPOINT}/{sample.id}", json=input_data)
 	assert updated.status_code == 200
 	assert updated.json() == expected_response
 
 
-def test_get_status(database: data.Database, client: fastapi.testclient.TestClient) -> None:
+def test_get_status() -> None:
 	"""Test getting the status of the server."""
+	database = data.InMemoryDatabase(data.TaskConfig(()), ())
+	client = create_client(database)
 	response = client.get(_STATUS_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["worker"]["isWorking"] is False
 
 
-@pytest.fixture()
-def database() -> data.Database:
-	"""Fixture for an (in-memory) database."""
-	return data.InMemoryDatabase()
+def create_client(database: data.Database) -> fastapi.testclient.TestClient:
+	"""Create a client for testing."""
+	app = server.create_app(
+		database,
+		sampling.RandomSampler(),
+		lambda: None,
+	)
+	return fastapi.testclient.TestClient(app)
 
 
 @pytest.fixture

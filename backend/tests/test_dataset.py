@@ -35,11 +35,3 @@ class TestMtop:
 		dataset = datasets.MTOP(input_dir, add_class_to_text=True)
 		assert len(dataset.samples) == 1
 		assert dataset.samples[0].text == f"{_MTOP_TEXT} ({_MTOP_TEXT_CLASS})"
-
-	def test_fill_database(self, input_dir: pathlib.Path) -> None:
-		"""Test filling a database."""
-		database = data.InMemoryDatabase()
-		dataset = datasets.MTOP(input_dir, add_class_to_text=True)
-		dataset.fill_database(database)
-		assert len(database.find_samples()) == 1
-		assert database.get_sample_by_id(dataset.samples[0].id).text == dataset.samples[0].text
