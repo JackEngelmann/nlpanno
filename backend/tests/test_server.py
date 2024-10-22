@@ -7,6 +7,12 @@ import pytest
 from nlpanno import data, sampling, server
 
 
+_SAMPLES_ENDPOINT = "/api/samples"
+_TASK_CONFIG_ENDPOINT = "/api/taskConfig"
+_NEXT_SAMPLE_ENDPOINT = "/api/nextSample"
+_STATUS_ENDPOINT = "/api/status"
+
+
 def test_get_samples(database: data.Database, client: fastapi.testclient.TestClient) -> None:
 	"""Test getting samples."""
 	samples = [
@@ -15,7 +21,7 @@ def test_get_samples(database: data.Database, client: fastapi.testclient.TestCli
 	]
 	for sample in samples:
 		database.add_sample(sample)
-	response = client.get("/samples")
+	response = client.get(_SAMPLES_ENDPOINT)
 	assert response.status_code == 200
 	assert len(response.json()) == len(samples)
 
@@ -24,7 +30,7 @@ def get_task_config(database: data.Database, client: fastapi.testclient.TestClie
 	"""Test getting the task config."""
 	task_config = data.TaskConfig(("class 1", "class 2"))
 	database.set_task_config(task_config)
-	response = client.get("/taskConfig")
+	response = client.get(_TASK_CONFIG_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["textClasses"] == ["class 1", "class 2"]
 
@@ -33,7 +39,7 @@ def test_get_next_sample(database: data.Database, client: fastapi.testclient.Tes
 	"""Test getting the next sample."""
 	sample_id = data.create_id()
 	database.add_sample(data.Sample(sample_id, "text 1", None))
-	response = client.get("/nextSample")
+	response = client.get(_NEXT_SAMPLE_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["id"] == sample_id
 
@@ -112,14 +118,14 @@ def test_patch_sample(
 		(0.1, 0.2),
 	)
 	database.add_sample(sample)
-	updated = client.patch(f"/samples/{sample.id}", json=input_data)
+	updated = client.patch(f"{_SAMPLES_ENDPOINT}/{sample.id}", json=input_data)
 	assert updated.status_code == 200
 	assert updated.json() == expected_response
 
 
 def test_get_status(database: data.Database, client: fastapi.testclient.TestClient) -> None:
 	"""Test getting the status of the server."""
-	response = client.get("/status")
+	response = client.get(_STATUS_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["worker"]["isWorking"] is False
 

@@ -76,4 +76,3 @@ def get_status(
 	worker_status = request_context.worker.get_status()
 	app_status = status.Status(worker_status)
 	return transferobject.StatusDTO.from_domain_object(app_status)
-
