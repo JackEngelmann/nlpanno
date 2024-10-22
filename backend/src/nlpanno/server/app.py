@@ -11,6 +11,7 @@ from nlpanno.server import api, middlewares, requestcontext, static
 
 def create_app(
 	database: data.Database,
+	task_config: data.TaskConfig,
 	sampler: sampling.Sampler,
 	handle_update: nlpanno.worker.UpdateHandler,
 ) -> fastapi.FastAPI:
@@ -24,6 +25,7 @@ def create_app(
 	app.add_event_handler("shutdown", worker.end)
 	request_context = requestcontext.RequestContext(
 		database,
+		task_config,
 		sampler,
 		worker,
 	)

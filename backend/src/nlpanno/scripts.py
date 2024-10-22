@@ -14,6 +14,7 @@ app = None
 
 def start_server(
 	database: nlpanno.data.Database,
+	task_config: nlpanno.data.TaskConfig,
 	sampler: Optional[nlpanno.sampling.Sampler] = None,
 	handle_update: Optional[nlpanno.worker.UpdateHandler] = None,
 	port: int = 8000,
@@ -26,7 +27,7 @@ def start_server(
 	if sampler is None:
 		sampler = nlpanno.sampling.RandomSampler()
 
-	app = nlpanno.server.create_app(database, sampler, handle_update)
+	app = nlpanno.server.create_app(database, task_config, sampler, handle_update)
 	uvicorn.run("nlpanno.scripts:app", log_config=None, port=port)
 
 

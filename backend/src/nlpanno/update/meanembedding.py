@@ -51,8 +51,9 @@ class EmbeddingCache:
 class MeanEmbeddingUpdater:
 	"""Updater using mean embeddings to predict potential text classes."""
 
-	def __init__(self, database: data.Database, model_name: str) -> None:
+	def __init__(self, database: data.Database, model_name: str, task_config: data.TaskConfig) -> None:
 		self._database = database
+		self._task_config = task_config
 		model = sentence_transformers.SentenceTransformer(model_name)
 
 		def embedding_function(texts: list[str]) -> list[torch.Tensor]:
@@ -64,13 +65,12 @@ class MeanEmbeddingUpdater:
 		"""Make new predictions when the data was updated."""
 		samples = self._database.find_samples()
 		self._embedding_cache.prefill(samples)
-		task_config = self._database.get_task_config()
 		class_embeddings = self._derive_class_embeddings(samples)
 		for sample in samples:
 			if sample.text_class is not None:
 				continue
 			sample_embedding = self._embedding_cache.get_embedding(sample)
-			text_class_predictions = self._predict(sample_embedding, class_embeddings, task_config)
+			text_class_predictions = self._predict(sample_embedding, class_embeddings, self._task_config)
 			sample = self._database.get_sample_by_id(sample.id)  # could have changed
 			sample.text_class_predictions = text_class_predictions
 			self._database.update_sample(sample)

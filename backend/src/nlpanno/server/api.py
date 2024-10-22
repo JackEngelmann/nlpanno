@@ -26,8 +26,7 @@ def get_task_config(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> transferobject.TaskConfigDTO:
 	"""Get the task config."""
-	task_config = request_context.database.get_task_config()
-	return transferobject.TaskConfigDTO.from_domain_object(task_config)
+	return transferobject.TaskConfigDTO.from_domain_object(request_context.task_config)
 
 
 @router.get("/nextSample")

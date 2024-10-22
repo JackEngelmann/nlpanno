@@ -12,6 +12,7 @@ class RequestContext:
 	"""Request context."""
 
 	database: data.Database
+	task_config: data.TaskConfig
 	sampler: sampling.Sampler
 	worker: worker.Worker
 

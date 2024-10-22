@@ -41,11 +41,6 @@ class Database(abc.ABC):
 	"""Base class for all databases."""
 
 	@abc.abstractmethod
-	def get_task_config(self) -> TaskConfig:
-		"""Get the task config."""
-		raise NotImplementedError()
-
-	@abc.abstractmethod
 	def get_sample_by_id(self, id_: Id) -> Sample:
 		"""Get a sample by the unique identifier."""
 		raise NotImplementedError()
@@ -64,15 +59,8 @@ class Database(abc.ABC):
 class InMemoryDatabase(Database):
 	"""Database implementation keeping the data in-memory."""
 
-	def __init__(self, task_config: TaskConfig, samples: tuple[Sample, ...]) -> None:
+	def __init__(self, samples: tuple[Sample, ...]) -> None:
 		self._sample_by_id: dict[str, Sample] = {sample.id: sample for sample in samples}
-		self._task_config = task_config
-
-	def get_task_config(self) -> TaskConfig:
-		"""Get the task config."""
-		if self._task_config is None:
-			raise RuntimeError("Task config was not set.")
-		return self._task_config
 
 	def get_sample_by_id(self, id_: Id) -> Sample:
 		"""Get a sample by the unique identifier."""
