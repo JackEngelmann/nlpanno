@@ -22,7 +22,7 @@ class TestInMemoryDatabase:
 			"class 2",
 		)
 		database = data.InMemoryDatabase((sample_to_find, other_sample))
-		assert len(database.find_samples()) == 2
+		assert len(database.get_all_samples()) == 2
 		found_sample = database.get_sample_by_id(sample_to_find.id)
 		assert found_sample is not None
 		assert found_sample == sample_to_find
@@ -48,9 +48,7 @@ class TestInMemoryDatabase:
 			),
 		)
 		database = data.InMemoryDatabase(samples)
-		assert len(database.find_samples()) == 3
-		assert len(database.find_samples({"text_class": "class 1"})) == 2
-		assert len(database.find_samples({"text_class": "class 2"})) == 1
+		assert len(database.get_all_samples()) == 3
 
 	@staticmethod
 	def test_update() -> None:
@@ -68,3 +66,16 @@ class TestInMemoryDatabase:
 		)
 		database.update_sample(updated_sample)
 		assert database.get_sample_by_id(sample_to_update.id) == updated_sample
+	
+	@staticmethod
+	def test_get_unlabeled_samples() -> None:
+		"""Test getting unlabeled samples."""
+		unlabeled_id = data.create_id()
+		samples = (
+			data.Sample(data.create_id(), "text 1", "class 1"),
+			data.Sample(unlabeled_id, "text 2", None),
+		)
+		database = data.InMemoryDatabase(samples)
+		unlabeled_samples = database.get_unlabeled_samples()
+		assert len(unlabeled_samples) == 1
+		assert unlabeled_samples[0].id == unlabeled_id

@@ -63,7 +63,7 @@ class MeanEmbeddingUpdater:
 
 	def __call__(self) -> None:
 		"""Make new predictions when the data was updated."""
-		samples = self._database.find_samples()
+		samples = self._database.get_all_samples()
 		self._embedding_cache.prefill(samples)
 		class_embeddings = self._derive_class_embeddings(samples)
 		for sample in samples:

@@ -24,12 +24,6 @@ class Sample:
 	text_class_predictions: Optional[tuple[float, ...]] = None
 
 
-class SampleFindCriteria(TypedDict, total=False):
-	"""Find criteria for a sample."""
-
-	text_class: Optional[str]
-
-
 @dataclasses.dataclass
 class TaskConfig:
 	"""Data structure for a task configuration."""
@@ -46,14 +40,24 @@ class Database(abc.ABC):
 		raise NotImplementedError()
 
 	@abc.abstractmethod
-	def find_samples(self, criteria: Optional[SampleFindCriteria] = None) -> tuple[Sample, ...]:
-		"""Find samples given the criteria."""
+	def get_all_samples(self) -> tuple[Sample, ...]:
+		"""Find all samples."""
 		raise NotImplementedError()
 
 	@abc.abstractmethod
 	def update_sample(self, sample: Sample) -> None:
 		"""Update a sample."""
 		raise NotImplementedError()
+
+	def get_unlabeled_samples(self) -> tuple[Sample, ...]:
+		"""
+		Get all unlabeled samples.
+
+		This is a naive implementation that does not make use of DB features. It can be
+		overwritten by DB implementations that have more efficient ways to retrieve unlabeled
+		samples.
+		"""
+		return tuple(sample for sample in self.get_all_samples() if sample.text_class is None)
 
 
 class InMemoryDatabase(Database):
@@ -69,19 +73,10 @@ class InMemoryDatabase(Database):
 			raise ValueError(f"No sample with id {id_}")
 		return copy.deepcopy(sample)
 
-	def find_samples(self, criteria: Optional[SampleFindCriteria] = None) -> tuple[Sample, ...]:
-		"""Find samples given the criteria."""
-		if criteria is None:
-			return tuple(self._sample_by_id.values())
-		matches = []
-		for sample in self._sample_by_id.values():
-			text_class_matches = (
-				"text_class" not in criteria or sample.text_class == criteria["text_class"]
-			)
-			if text_class_matches:
-				matches.append(copy.deepcopy(sample))
-		return tuple(matches)
-
+	def get_all_samples(self) -> tuple[Sample, ...]:
+		"""Find all samples."""
+		return tuple(self._sample_by_id.values())
+	
 	def update_sample(self, sample: Sample) -> None:
 		"""Update a sample."""
 		self._sample_by_id[sample.id] = sample

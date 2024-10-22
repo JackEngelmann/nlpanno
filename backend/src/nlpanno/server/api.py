@@ -17,7 +17,7 @@ def get_samples(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> list[transferobject.SampleDTO]:
 	"""Get all samples."""
-	all_samples = request_context.database.find_samples()
+	all_samples = request_context.database.get_all_samples()
 	return [transferobject.SampleDTO.from_domain_object(sample) for sample in all_samples]
 
 
@@ -34,7 +34,7 @@ def get_next_sample(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> transferobject.SampleDTO | None:
 	"""Get the next sample (e.g. for annotation)."""
-	not_labeled = request_context.database.find_samples({"text_class": None})
+	not_labeled = request_context.database.get_unlabeled_samples()
 	if len(not_labeled) == 0:
 		return None
 
