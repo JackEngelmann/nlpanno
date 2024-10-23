@@ -2,7 +2,7 @@
 
 import pytest
 
-from nlpanno import data, domain, worker
+from nlpanno import domain, worker
 from nlpanno.server import status, transferobject
 
 

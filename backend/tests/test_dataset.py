@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from nlpanno import data, datasets
+from nlpanno import datasets
 
 # This sample is from the [MTOP dataset](https://arxiv.org/abs/2008.09335).
 _MTOP_LINE = """3232353833393435	IN:GET_MESSAGE	6:9:SL:RECIPIENT,10:13:SL:SENDER,18:23:SL:SENDER,24:29:SL:DATE_TIME	Haben mir Ben und Leroy heute geschrieben	messaging	de_XX	[IN:GET_MESSAGE [SL:SENDER Ben ] [SL:SENDER Leroy ] [SL:RECIPIENT mir ] [SL:DATE_TIME heute ] ]	{"tokens":["Haben","mir","Ben","und","Leroy","heute","geschrieben"],"tokenSpans":[{"start":0,"length":5},{"start":6,"length":3},{"start":10,"length":3},{"start":14,"length":3},{"start":18,"length":5},{"start":24,"length":5},{"start":30,"length":11}]}"""  # noqa: E501

@@ -1,8 +1,7 @@
-"""Module implementing data types and databases."""
+"""Base classes for databases."""
 
 from nlpanno import domain
 import abc
-import copy
 
 
 class SampleRepository(abc.ABC):
@@ -32,25 +31,9 @@ class SampleRepository(abc.ABC):
 		samples.
 		"""
 		return tuple(sample for sample in self.get_all() if sample.text_class is None)
-
-
-class InMemorySampleRepository(SampleRepository):
-	"""Database implementation keeping the data in-memory."""
-
-	def __init__(self, samples: tuple[domain.Sample, ...]) -> None:
-		self._sample_by_id: dict[str, domain.Sample] = {sample.id: sample for sample in samples}
-
-	def get_by_id(self, id_: domain.Id) -> domain.Sample:
-		"""Get a sample by the unique identifier."""
-		sample = self._sample_by_id.get(id_)
-		if sample is None:
-			raise ValueError(f"No sample with id {id_}")
-		return copy.deepcopy(sample)
-
-	def get_all(self) -> tuple[domain.Sample, ...]:
-		"""Find all samples."""
-		return tuple(self._sample_by_id.values())
 	
-	def update(self, sample: domain.Sample) -> None:
-		"""Update a sample."""
-		self._sample_by_id[sample.id] = sample
+	@abc.abstractmethod
+	def create(self, sample: domain.Sample) -> None:
+		"""Create a sample."""
+		raise NotImplementedError()
+

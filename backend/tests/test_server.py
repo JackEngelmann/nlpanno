@@ -4,7 +4,7 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from nlpanno import data, sampling, server, domain
+from nlpanno import database, sampling, server, domain
 
 
 _SAMPLES_ENDPOINT = "/api/samples"
@@ -16,8 +16,8 @@ _STATUS_ENDPOINT = "/api/status"
 def test_get_task_config() -> None:
 	"""Test getting the task config."""
 	task_config = domain.TaskConfig(("class 1", "class 2"))
-	database = data.InMemorySampleRepository(())
-	client = create_client(database, task_config)
+	sample_repository = database.InMemorySampleRepository()
+	client = create_client(sample_repository, task_config)
 	response = client.get(_TASK_CONFIG_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json() == {"textClasses": ["class 1", "class 2"]}
@@ -25,22 +25,21 @@ def test_get_task_config() -> None:
 
 def test_get_samples() -> None:
 	"""Test getting samples."""
-	samples = [
-		domain.Sample(domain.create_id(), "text 1", None),
-		domain.Sample(domain.create_id(), "text 2", None),
-	]
-	database = data.InMemorySampleRepository(samples)
-	client = create_client(database)
+	sample_repository = database.InMemorySampleRepository()
+	sample_repository.create(domain.Sample(domain.create_id(), "text 1", None))
+	sample_repository.create(domain.Sample(domain.create_id(), "text 2", None))
+	client = create_client(sample_repository)
 	response = client.get(_SAMPLES_ENDPOINT)
 	assert response.status_code == 200
-	assert len(response.json()) == len(samples)
+	assert len(response.json()) == 2
 
 
 def test_get_next_sample() -> None:
 	"""Test getting the next sample."""
 	sample_id = domain.create_id()
-	database = data.InMemorySampleRepository((domain.Sample(sample_id, "text 1", None),))
-	client = create_client(database)
+	sample_repository = database.InMemorySampleRepository()
+	sample_repository.create(domain.Sample(sample_id, "text 1", None))
+	client = create_client(sample_repository)
 	response = client.get(_NEXT_SAMPLE_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["id"] == sample_id
@@ -117,8 +116,9 @@ def test_patch_sample(
 		"class",
 		(0.1, 0.2),
 	)
-	database = data.InMemorySampleRepository((sample,))
-	client = create_client(database)
+	sample_repository = database.InMemorySampleRepository()
+	sample_repository.create(sample)
+	client = create_client(sample_repository)
 	updated = client.patch(f"{_SAMPLES_ENDPOINT}/{sample.id}", json=input_data)
 	assert updated.status_code == 200
 	assert updated.json() == expected_response
@@ -126,19 +126,21 @@ def test_patch_sample(
 
 def test_get_status() -> None:
 	"""Test getting the status of the server."""
-	database = data.InMemorySampleRepository(())
-	client = create_client(database)
+	sample_repository = database.InMemorySampleRepository()
+	client = create_client(sample_repository)
 	response = client.get(_STATUS_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["worker"]["isWorking"] is False
 
 
-def create_client(database: data.SampleRepository, task_config: domain.TaskConfig | None = None) -> fastapi.testclient.TestClient:
+def create_client(
+	sample_repository: database.SampleRepository, task_config: domain.TaskConfig | None = None
+) -> fastapi.testclient.TestClient:
 	if task_config is None:
 		task_config = domain.TaskConfig(())
 	"""Create a client for testing."""
 	app = server.create_app(
-		database,
+		sample_repository,
 		task_config,
 		sampling.RandomSampler(),
 		lambda: None,
@@ -147,10 +149,10 @@ def create_client(database: data.SampleRepository, task_config: domain.TaskConfi
 
 
 @pytest.fixture
-def client(database: data.SampleRepository) -> fastapi.testclient.TestClient:
+def client(sample_repository: database.SampleRepository) -> fastapi.testclient.TestClient:
 	"""Fixture for fastAPI test client."""
 	app = server.create_app(
-		database,
+		sample_repository,
 		sampling.RandomSampler(),
 		lambda: None,
 	)

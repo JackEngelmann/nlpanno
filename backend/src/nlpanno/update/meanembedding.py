@@ -8,7 +8,7 @@ import sentence_transformers
 import sentence_transformers.util
 import torch
 
-from nlpanno import data, domain
+from nlpanno import database, domain
 
 _LOGGER = logging.getLogger("nlpanno")
 
@@ -51,8 +51,8 @@ class EmbeddingCache:
 class MeanEmbeddingUpdater:
 	"""Updater using mean embeddings to predict potential text classes."""
 
-	def __init__(self, database: data.SampleRepository, model_name: str, task_config: domain.TaskConfig) -> None:
-		self._database = database
+	def __init__(self, sample_repository: database.SampleRepository, model_name: str, task_config: domain.TaskConfig) -> None:
+		self._sample_repository = sample_repository
 		self._task_config = task_config
 		model = sentence_transformers.SentenceTransformer(model_name)
 
@@ -63,7 +63,7 @@ class MeanEmbeddingUpdater:
 
 	def __call__(self) -> None:
 		"""Make new predictions when the data was updated."""
-		samples = self._database.get_all()
+		samples = self._sample_repository.get_all()
 		self._embedding_cache.prefill(samples)
 		class_embeddings = self._derive_class_embeddings(samples)
 		for sample in samples:
@@ -71,9 +71,9 @@ class MeanEmbeddingUpdater:
 				continue
 			sample_embedding = self._embedding_cache.get_embedding(sample)
 			text_class_predictions = self._predict(sample_embedding, class_embeddings, self._task_config)
-			sample = self._database.get_by_id(sample.id)  # could have changed
+			sample = self._sample_repository.get_by_id(sample.id)  # could have changed
 			sample.text_class_predictions = text_class_predictions
-			self._database.update(sample)
+			self._sample_repository.update(sample)
 
 	def _predict(
 		self,

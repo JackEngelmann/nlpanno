@@ -1,6 +1,6 @@
 """Example script to annotate MTOP data aided by mean embeddings."""
 
-import nlpanno.data
+import nlpanno.database
 import nlpanno.datasets
 import nlpanno.scripts
 import nlpanno.update
@@ -12,7 +12,7 @@ mtop_dataset = nlpanno.datasets.MTOP(
 	add_class_to_text=True,
 	limit=1000,
 )
-db = nlpanno.data.InMemorySampleRepository(mtop_dataset.samples)
-handle_update = nlpanno.update.MeanEmbeddingUpdater(db, "distiluse-base-multilingual-cased-v1", mtop_dataset.task_config)
+sample_repository = nlpanno.database.SQLiteSampleRepository("mtop.db")
+handle_update = nlpanno.update.MeanEmbeddingUpdater(sample_repository, "distiluse-base-multilingual-cased-v1", mtop_dataset.task_config)
 
-nlpanno.scripts.start_server(db, mtop_dataset.task_config, handle_update=handle_update)
+nlpanno.scripts.start_server(sample_repository, mtop_dataset.task_config, handle_update=handle_update)

@@ -4,7 +4,7 @@ import dataclasses
 import pathlib
 from collections.abc import Iterator
 
-from nlpanno import data, domain
+from nlpanno import domain
 
 
 @dataclasses.dataclass
@@ -13,12 +13,6 @@ class Dataset:
 
 	task_config: domain.TaskConfig
 	samples: tuple[domain.Sample, ...]
-
-	def fill_database(self, database: data.SampleRepository) -> None:
-		"""Fill a database with the data from the dataset."""
-		database.set_task_config(self.task_config)
-		for sample in self.samples:
-			database.add_sample(sample)
 
 
 class MTOP(Dataset):

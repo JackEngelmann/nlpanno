@@ -4,20 +4,20 @@ import dataclasses
 
 import fastapi
 
-from nlpanno import data, sampling, worker, domain
+from nlpanno import database, sampling, worker, domain
 
 
 @dataclasses.dataclass
 class RequestContext:
 	"""Request context."""
 
-	database: data.SampleRepository
+	sample_repository: database.SampleRepository
 	task_config: domain.TaskConfig
 	sampler: sampling.Sampler
 	worker: worker.Worker
 
 
-async def _get_request_context(request: fastapi.Request) -> data.SampleRepository:
+async def _get_request_context(request: fastapi.Request) -> RequestContext:
 	"""Get the request context from the app state."""
 	return request.app.state.request_context
 

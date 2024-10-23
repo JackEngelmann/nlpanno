@@ -5,12 +5,12 @@ import fastapi.templating
 
 import nlpanno.server.logging
 import nlpanno.worker
-from nlpanno import data, domain, sampling
+from nlpanno import database, domain, sampling
 from nlpanno.server import api, middlewares, requestcontext, static
 
 
 def create_app(
-	database: data.SampleRepository,
+	sample_repository: database.SampleRepository,
 	task_config: domain.TaskConfig,
 	sampler: sampling.Sampler,
 	handle_update: nlpanno.worker.UpdateHandler,
@@ -24,7 +24,7 @@ def create_app(
 	app.add_event_handler("startup", worker.start)
 	app.add_event_handler("shutdown", worker.end)
 	request_context = requestcontext.RequestContext(
-		database,
+		sample_repository,
 		task_config,
 		sampler,
 		worker,
