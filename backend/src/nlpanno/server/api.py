@@ -17,7 +17,7 @@ def get_samples(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> list[transferobject.SampleDTO]:
 	"""Get all samples."""
-	all_samples = request_context.database.get_all_samples()
+	all_samples = request_context.database.get_all()
 	return [transferobject.SampleDTO.from_domain_object(sample) for sample in all_samples]
 
 
@@ -34,12 +34,12 @@ def get_next_sample(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> transferobject.SampleDTO | None:
 	"""Get the next sample (e.g. for annotation)."""
-	not_labeled = request_context.database.get_unlabeled_samples()
+	not_labeled = request_context.database.get_unlabeled()
 	if len(not_labeled) == 0:
 		return None
 
 	sample_id = request_context.sampler(not_labeled)
-	sample = request_context.database.get_sample_by_id(sample_id)
+	sample = request_context.database.get_by_id(sample_id)
 	return transferobject.SampleDTO.from_domain_object(sample)
 
 
@@ -50,7 +50,7 @@ def patch_sample(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> transferobject.SampleDTO:
 	"""Patch (partial update) a sample."""
-	sample = request_context.database.get_sample_by_id(sample_id)
+	sample = request_context.database.get_by_id(sample_id)
 
 	old_dict = dataclasses.asdict(sample)
 	# Since some fields of Sample are Optional and PATCH allows partial updates,
@@ -59,11 +59,11 @@ def patch_sample(
 	update_dict = sample_patch.model_dump(exclude_unset=True)
 	new_dict = {**old_dict, **update_dict}
 	updated_sample = domain.Sample(**new_dict)
-	request_context.database.update_sample(updated_sample)
+	request_context.database.update(updated_sample)
 
 	request_context.worker.notify_data_update()
 
-	sample = request_context.database.get_sample_by_id(sample_id)
+	sample = request_context.database.get_by_id(sample_id)
 	return transferobject.SampleDTO.from_domain_object(sample)
 
 

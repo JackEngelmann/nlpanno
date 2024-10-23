@@ -11,13 +11,13 @@ from nlpanno import data, sampling, worker, domain
 class RequestContext:
 	"""Request context."""
 
-	database: data.Database
+	database: data.SampleRepository
 	task_config: domain.TaskConfig
 	sampler: sampling.Sampler
 	worker: worker.Worker
 
 
-async def _get_request_context(request: fastapi.Request) -> data.Database:
+async def _get_request_context(request: fastapi.Request) -> data.SampleRepository:
 	"""Get the request context from the app state."""
 	return request.app.state.request_context
 

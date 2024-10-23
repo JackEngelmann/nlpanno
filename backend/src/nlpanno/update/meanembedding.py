@@ -51,7 +51,7 @@ class EmbeddingCache:
 class MeanEmbeddingUpdater:
 	"""Updater using mean embeddings to predict potential text classes."""
 
-	def __init__(self, database: data.Database, model_name: str, task_config: domain.TaskConfig) -> None:
+	def __init__(self, database: data.SampleRepository, model_name: str, task_config: domain.TaskConfig) -> None:
 		self._database = database
 		self._task_config = task_config
 		model = sentence_transformers.SentenceTransformer(model_name)
@@ -63,7 +63,7 @@ class MeanEmbeddingUpdater:
 
 	def __call__(self) -> None:
 		"""Make new predictions when the data was updated."""
-		samples = self._database.get_all_samples()
+		samples = self._database.get_all()
 		self._embedding_cache.prefill(samples)
 		class_embeddings = self._derive_class_embeddings(samples)
 		for sample in samples:
@@ -71,9 +71,9 @@ class MeanEmbeddingUpdater:
 				continue
 			sample_embedding = self._embedding_cache.get_embedding(sample)
 			text_class_predictions = self._predict(sample_embedding, class_embeddings, self._task_config)
-			sample = self._database.get_sample_by_id(sample.id)  # could have changed
+			sample = self._database.get_by_id(sample.id)  # could have changed
 			sample.text_class_predictions = text_class_predictions
-			self._database.update_sample(sample)
+			self._database.update(sample)
 
 	def _predict(
 		self,

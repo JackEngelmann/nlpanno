@@ -10,7 +10,7 @@ from nlpanno.server import api, middlewares, requestcontext, static
 
 
 def create_app(
-	database: data.Database,
+	database: data.SampleRepository,
 	task_config: domain.TaskConfig,
 	sampler: sampling.Sampler,
 	handle_update: nlpanno.worker.UpdateHandler,

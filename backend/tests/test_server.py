@@ -16,7 +16,7 @@ _STATUS_ENDPOINT = "/api/status"
 def test_get_task_config() -> None:
 	"""Test getting the task config."""
 	task_config = domain.TaskConfig(("class 1", "class 2"))
-	database = data.InMemoryDatabase(())
+	database = data.InMemorySampleRepository(())
 	client = create_client(database, task_config)
 	response = client.get(_TASK_CONFIG_ENDPOINT)
 	assert response.status_code == 200
@@ -29,7 +29,7 @@ def test_get_samples() -> None:
 		domain.Sample(domain.create_id(), "text 1", None),
 		domain.Sample(domain.create_id(), "text 2", None),
 	]
-	database = data.InMemoryDatabase(samples)
+	database = data.InMemorySampleRepository(samples)
 	client = create_client(database)
 	response = client.get(_SAMPLES_ENDPOINT)
 	assert response.status_code == 200
@@ -39,7 +39,7 @@ def test_get_samples() -> None:
 def test_get_next_sample() -> None:
 	"""Test getting the next sample."""
 	sample_id = domain.create_id()
-	database = data.InMemoryDatabase((domain.Sample(sample_id, "text 1", None),))
+	database = data.InMemorySampleRepository((domain.Sample(sample_id, "text 1", None),))
 	client = create_client(database)
 	response = client.get(_NEXT_SAMPLE_ENDPOINT)
 	assert response.status_code == 200
@@ -117,7 +117,7 @@ def test_patch_sample(
 		"class",
 		(0.1, 0.2),
 	)
-	database = data.InMemoryDatabase((sample,))
+	database = data.InMemorySampleRepository((sample,))
 	client = create_client(database)
 	updated = client.patch(f"{_SAMPLES_ENDPOINT}/{sample.id}", json=input_data)
 	assert updated.status_code == 200
@@ -126,14 +126,14 @@ def test_patch_sample(
 
 def test_get_status() -> None:
 	"""Test getting the status of the server."""
-	database = data.InMemoryDatabase(())
+	database = data.InMemorySampleRepository(())
 	client = create_client(database)
 	response = client.get(_STATUS_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json()["worker"]["isWorking"] is False
 
 
-def create_client(database: data.Database, task_config: domain.TaskConfig | None = None) -> fastapi.testclient.TestClient:
+def create_client(database: data.SampleRepository, task_config: domain.TaskConfig | None = None) -> fastapi.testclient.TestClient:
 	if task_config is None:
 		task_config = domain.TaskConfig(())
 	"""Create a client for testing."""
@@ -147,7 +147,7 @@ def create_client(database: data.Database, task_config: domain.TaskConfig | None
 
 
 @pytest.fixture
-def client(database: data.Database) -> fastapi.testclient.TestClient:
+def client(database: data.SampleRepository) -> fastapi.testclient.TestClient:
 	"""Fixture for fastAPI test client."""
 	app = server.create_app(
 		database,
