@@ -23,3 +23,8 @@ def tests(session: nox.Session) -> None:
 def mypy(session: nox.Session) -> None:
 	session.install(".[tests,develop]")
 	session.run("mypy", "src/", "tests/")
+
+@nox.session
+def uv_pip_compile(session: nox.Session) -> None:
+	session.install("uv")
+	session.run("uv", "pip", "compile", "pyproject.toml", "-o", "requirements.txt")
