@@ -12,7 +12,7 @@ mtop_dataset = nlpanno.datasets.MTOP(
 	add_class_to_text=True,
 	limit=1000,
 )
-db = nlpanno.data.InMemoryDatabase(mtop_dataset.samples)
+db = nlpanno.data.InMemorySampleRepository(mtop_dataset.samples)
 handle_update = nlpanno.update.MeanEmbeddingUpdater(db, "distiluse-base-multilingual-cased-v1", mtop_dataset.task_config)
 
-nlpanno.scripts.start_server(db, handle_update=handle_update)
+nlpanno.scripts.start_server(db, mtop_dataset.task_config, handle_update=handle_update)
