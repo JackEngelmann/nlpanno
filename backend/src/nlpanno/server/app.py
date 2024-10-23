@@ -5,13 +5,13 @@ import fastapi.templating
 
 import nlpanno.server.logging
 import nlpanno.worker
-from nlpanno import data, sampling
+from nlpanno import data, domain, sampling
 from nlpanno.server import api, middlewares, requestcontext, static
 
 
 def create_app(
 	database: data.Database,
-	task_config: data.TaskConfig,
+	task_config: domain.TaskConfig,
 	sampler: sampling.Sampler,
 	handle_update: nlpanno.worker.UpdateHandler,
 ) -> fastapi.FastAPI:

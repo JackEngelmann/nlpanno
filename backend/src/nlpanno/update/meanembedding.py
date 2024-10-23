@@ -8,7 +8,7 @@ import sentence_transformers
 import sentence_transformers.util
 import torch
 
-from nlpanno import data
+from nlpanno import data, domain
 
 _LOGGER = logging.getLogger("nlpanno")
 
@@ -22,11 +22,11 @@ class EmbeddingCache:
 		self._embedding_function = embedding_function
 		self._embedding_by_id: dict[str, torch.Tensor] = {}
 
-	def prefill(self, samples: tuple[data.Sample, ...]) -> None:
+	def prefill(self, samples: tuple[domain.Sample, ...]) -> None:
 		"""Prefill the cache with embeddings for a list of samples."""
 		self._load_missing_embeddings(samples)
 
-	def get_embedding(self, sample: data.Sample) -> torch.Tensor:
+	def get_embedding(self, sample: domain.Sample) -> torch.Tensor:
 		"""Get the embedding for a sample."""
 		embedding = self._embedding_by_id.get(sample.id)
 		if embedding is None:
@@ -35,7 +35,7 @@ class EmbeddingCache:
 			self._embedding_by_id[sample.id] = embedding
 		return embedding
 
-	def _load_missing_embeddings(self, samples: tuple[data.Sample, ...]) -> None:
+	def _load_missing_embeddings(self, samples: tuple[domain.Sample, ...]) -> None:
 		"""Load missing embeddings for a list of samples."""
 		samples_to_embed = [sample for sample in samples if sample.id not in self._embedding_by_id]
 		if len(samples_to_embed) == 0:
@@ -51,7 +51,7 @@ class EmbeddingCache:
 class MeanEmbeddingUpdater:
 	"""Updater using mean embeddings to predict potential text classes."""
 
-	def __init__(self, database: data.Database, model_name: str, task_config: data.TaskConfig) -> None:
+	def __init__(self, database: data.Database, model_name: str, task_config: domain.TaskConfig) -> None:
 		self._database = database
 		self._task_config = task_config
 		model = sentence_transformers.SentenceTransformer(model_name)
@@ -79,7 +79,7 @@ class MeanEmbeddingUpdater:
 		self,
 		sample_embedding: torch.Tensor,
 		class_embeddings: dict[str, torch.Tensor],
-		task_config: data.TaskConfig,
+		task_config: domain.TaskConfig,
 	) -> tuple[float, ...]:
 		"""Predict text classes for one sample."""
 		return tuple(
@@ -87,7 +87,7 @@ class MeanEmbeddingUpdater:
 			for text_class in task_config.text_classes
 		)
 
-	def _derive_class_embeddings(self, samples: tuple[data.Sample, ...]) -> dict[str, torch.Tensor]:
+	def _derive_class_embeddings(self, samples: tuple[domain.Sample, ...]) -> dict[str, torch.Tensor]:
 		"""Calculate all class embeddings (avg embedding of samples of the class)."""
 		_LOGGER.info("Starting to derive class embeddings")
 		embeddings_by_class: dict[str, list[torch.Tensor]] = collections.defaultdict(list)

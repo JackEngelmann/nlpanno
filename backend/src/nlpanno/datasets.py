@@ -4,15 +4,15 @@ import dataclasses
 import pathlib
 from collections.abc import Iterator
 
-from nlpanno import data
+from nlpanno import data, domain
 
 
 @dataclasses.dataclass
 class Dataset:
 	"""Base class for datasets."""
 
-	task_config: data.TaskConfig
-	samples: tuple[data.Sample, ...]
+	task_config: domain.TaskConfig
+	samples: tuple[domain.Sample, ...]
 
 	def fill_database(self, database: data.Database) -> None:
 		"""Fill a database with the data from the dataset."""
@@ -37,9 +37,9 @@ class MTOP(Dataset):
 		samples, task_config = self._read_data()
 		super().__init__(task_config, samples)
 
-	def _read_data(self) -> tuple[tuple[data.Sample, ...], data.TaskConfig]:
+	def _read_data(self) -> tuple[tuple[domain.Sample, ...], domain.TaskConfig]:
 		"""Load data from disk."""
-		samples: list[data.Sample] = []
+		samples: list[domain.Sample] = []
 		text_classes: set[str] = set()
 		for line in self._read_lines():
 			if self._limit_hit(samples):
@@ -47,10 +47,10 @@ class MTOP(Dataset):
 			sample, text_class = self._parse_line(line)
 			samples.append(sample)
 			text_classes.add(text_class)
-		task_config = data.TaskConfig(tuple(sorted(text_classes)))
+		task_config = domain.TaskConfig(tuple(sorted(text_classes)))
 		return tuple(samples), task_config
 
-	def _limit_hit(self, samples: list[data.Sample]) -> bool:
+	def _limit_hit(self, samples: list[domain.Sample]) -> bool:
 		"""Check if the limit has been hit."""
 		if self._limit is None:
 			return False
@@ -63,10 +63,10 @@ class MTOP(Dataset):
 			with open(data_file_path, encoding="utf-8") as input_file:
 				yield from input_file
 
-	def _parse_line(self, line: str) -> tuple[data.Sample, str]:
+	def _parse_line(self, line: str) -> tuple[domain.Sample, str]:
 		"""Parse a line from the data file."""
 		_, text_class, _, text, *_ = line.split("\t")
 		text_class = text_class[3:].replace("_", " ").lower()
 		if self._add_class_to_text:
 			text += f" ({text_class})"
-		return data.Sample(data.create_id(), text, None), text_class
+		return domain.Sample(domain.create_id(), text, None), text_class

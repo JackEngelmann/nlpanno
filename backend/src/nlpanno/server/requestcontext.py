@@ -4,7 +4,7 @@ import dataclasses
 
 import fastapi
 
-from nlpanno import data, sampling, worker
+from nlpanno import data, sampling, worker, domain
 
 
 @dataclasses.dataclass
@@ -12,7 +12,7 @@ class RequestContext:
 	"""Request context."""
 
 	database: data.Database
-	task_config: data.TaskConfig
+	task_config: domain.TaskConfig
 	sampler: sampling.Sampler
 	worker: worker.Worker
 

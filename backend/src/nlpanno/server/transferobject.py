@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 import pydantic
 
-from nlpanno import data, worker
+from nlpanno import domain, worker
 from nlpanno.server import status
 
 
@@ -52,7 +52,7 @@ class SampleDTO(BaseDTO):
 	)
 
 	@classmethod
-	def from_domain_object(cls, domain_object: data.Sample) -> "SampleDTO":
+	def from_domain_object(cls, domain_object: domain.Sample) -> "SampleDTO":
 		"""Create a data transfer object from a domain object."""
 		return cls(
 			id=domain_object.id,
@@ -68,6 +68,6 @@ class TaskConfigDTO(BaseDTO):
 	text_classes: tuple[str, ...] = pydantic.Field(serialization_alias="textClasses")
 
 	@classmethod
-	def from_domain_object(cls, domain_object: data.TaskConfig) -> "TaskConfigDTO":
+	def from_domain_object(cls, domain_object: domain.TaskConfig) -> "TaskConfigDTO":
 		"""Create a data transfer object from a domain object."""
 		return cls(text_classes=domain_object.text_classes)

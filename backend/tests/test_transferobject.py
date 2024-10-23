@@ -2,7 +2,7 @@
 
 import pytest
 
-from nlpanno import data, worker
+from nlpanno import data, domain, worker
 from nlpanno.server import status, transferobject
 
 
@@ -46,13 +46,13 @@ def test_status_from_domain_object(
 	"input_data, expected_output",
 	[
 		(
-			data.Sample("id", "text", "text class", (0.1, 0.2)),
+			domain.Sample("id", "text", "text class", (0.1, 0.2)),
 			transferobject.SampleDTO(
 				id="id", text="text", text_class="text class", text_class_predictions=(0.1, 0.2)
 			),
 		),
 		(
-			data.Sample("id", "text", "text class", None),
+			domain.Sample("id", "text", "text class", None),
 			transferobject.SampleDTO(
 				id="id", text="text", text_class="text class", text_class_predictions=None
 			),
@@ -60,7 +60,7 @@ def test_status_from_domain_object(
 	],
 )
 def test_sample_from_domain_object(
-	input_data: data.Sample, expected_output: transferobject.SampleDTO
+	input_data: domain.Sample, expected_output: transferobject.SampleDTO
 ) -> None:
 	"""Test creating a sample data transfer object from a domain object."""
 	dto = transferobject.SampleDTO.from_domain_object(input_data)
@@ -71,13 +71,13 @@ def test_sample_from_domain_object(
 	"input_data, expected_output",
 	[
 		(
-			data.TaskConfig(("class 1", "class 2")),
+			domain.TaskConfig(("class 1", "class 2")),
 			transferobject.TaskConfigDTO(text_classes=("class 1", "class 2")),
 		),
 	],
 )
 def test_task_config_from_domain_object(
-	input_data: data.TaskConfig, expected_output: transferobject.TaskConfigDTO
+	input_data: domain.TaskConfig, expected_output: transferobject.TaskConfigDTO
 ) -> None:
 	"""Test creating a task config data transfer object from a domain object."""
 	dto = transferobject.TaskConfigDTO.from_domain_object(input_data)

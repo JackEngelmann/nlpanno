@@ -14,7 +14,7 @@ app = None
 
 def start_server(
 	database: nlpanno.data.Database,
-	task_config: nlpanno.data.TaskConfig,
+	task_config: nlpanno.domain.TaskConfig,
 	sampler: Optional[nlpanno.sampling.Sampler] = None,
 	handle_update: Optional[nlpanno.worker.UpdateHandler] = None,
 	port: int = 8000,

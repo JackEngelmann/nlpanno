@@ -6,8 +6,8 @@ import fastapi
 import fastapi.staticfiles
 import fastapi.templating
 
-from nlpanno import data
-from nlpanno.server import requestcontext, status, transferobject, types, static
+from nlpanno import domain
+from nlpanno.server import requestcontext, status, transferobject, types
 
 router = fastapi.APIRouter(prefix="/api")
 
@@ -58,7 +58,7 @@ def patch_sample(
 	# and fields that were given as None (-> set to None).
 	update_dict = sample_patch.model_dump(exclude_unset=True)
 	new_dict = {**old_dict, **update_dict}
-	updated_sample = data.Sample(**new_dict)
+	updated_sample = domain.Sample(**new_dict)
 	request_context.database.update_sample(updated_sample)
 
 	request_context.worker.notify_data_update()

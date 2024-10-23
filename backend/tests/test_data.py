@@ -1,8 +1,6 @@
 """Test suite for data module."""
 
-import pytest
-
-from nlpanno import data
+from nlpanno import data, domain
 
 
 class TestInMemoryDatabase:
@@ -11,13 +9,13 @@ class TestInMemoryDatabase:
 	@staticmethod
 	def test_get_sample_by_id() -> None:
 		"""Test getting a sample by id."""
-		sample_to_find = data.Sample(
-			data.create_id(),
+		sample_to_find = domain.Sample(
+			domain.create_id(),
 			"text 1",
 			"class 1",
 		)
-		other_sample = data.Sample(
-			data.create_id(),
+		other_sample = domain.Sample(
+			domain.create_id(),
 			"text 2",
 			"class 2",
 		)
@@ -31,18 +29,18 @@ class TestInMemoryDatabase:
 	def test_find_samples() -> None:
 		"""Test finding samples."""
 		samples = (
-			data.Sample(
-				data.create_id(),
+			domain.Sample(
+				domain.create_id(),
 				"text 1",
 				"class 1",
 			),
-			data.Sample(
-				data.create_id(),
+			domain.Sample(
+				domain.create_id(),
 				"text 2",
 				"class 1",
 			),
-			data.Sample(
-				data.create_id(),
+			domain.Sample(
+				domain.create_id(),
 				"text 3",
 				"class 2",
 			),
@@ -53,13 +51,13 @@ class TestInMemoryDatabase:
 	@staticmethod
 	def test_update() -> None:
 		"""Test updating a sample."""
-		sample_to_update = data.Sample(
-			data.create_id(),
+		sample_to_update = domain.Sample(
+			domain.create_id(),
 			"text 1",
 			"class 1",
 		)
 		database = data.InMemoryDatabase((sample_to_update,))
-		updated_sample = data.Sample(
+		updated_sample = domain.Sample(
 			sample_to_update.id,
 			"updated text",
 			"class 2",
@@ -70,10 +68,10 @@ class TestInMemoryDatabase:
 	@staticmethod
 	def test_get_unlabeled_samples() -> None:
 		"""Test getting unlabeled samples."""
-		unlabeled_id = data.create_id()
+		unlabeled_id = domain.create_id()
 		samples = (
-			data.Sample(data.create_id(), "text 1", "class 1"),
-			data.Sample(unlabeled_id, "text 2", None),
+			domain.Sample(domain.create_id(), "text 1", "class 1"),
+			domain.Sample(unlabeled_id, "text 2", None),
 		)
 		database = data.InMemoryDatabase(samples)
 		unlabeled_samples = database.get_unlabeled_samples()
