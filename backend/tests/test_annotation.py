@@ -3,20 +3,20 @@
 import fastapi
 import fastapi.testclient
 from nlpanno import domain
+from nlpanno.database import inmemory
 import pytest
 
-from nlpanno import database, sampling, annotation
+from nlpanno import sampling, annotation, usecases
 
 _SAMPLES_ENDPOINT = "/api/samples"
 _TASK_CONFIG_ENDPOINT = "/api/taskConfig"
 _NEXT_SAMPLE_ENDPOINT = "/api/nextSample"
-_STATUS_ENDPOINT = "/api/status"
 
 
 def test_get_task_config() -> None:
 	"""Test getting the task config."""
-	task_config = domain.TaskConfig(("class 1", "class 2"))
-	sample_repository = database.InMemorySampleRepository()
+	task_config = domain.AnnotationTask(("class 1", "class 2"))
+	sample_repository = inmemory.InMemorySampleRepository()
 	client = create_client(sample_repository, task_config)
 	response = client.get(_TASK_CONFIG_ENDPOINT)
 	assert response.status_code == 200
@@ -26,7 +26,7 @@ def test_get_task_config() -> None:
 def test_get_next_sample() -> None:
 	"""Test getting the next sample."""
 	sample_id = domain.create_id()
-	sample_repository = database.InMemorySampleRepository()
+	sample_repository = inmemory.InMemorySampleRepository()
 	sample_repository.create(domain.Sample(sample_id, "text 1", None))
 	client = create_client(sample_repository)
 	response = client.get(_NEXT_SAMPLE_ENDPOINT)
@@ -45,7 +45,7 @@ def test_get_next_sample() -> None:
 				"id": "id",
 				"text": "text",
 				"textClass": "updated class",
-				"textClassPredictions": None,
+				"textClassPredictions": [],
 			},
 		),
 	],
@@ -60,7 +60,7 @@ def test_patch_sample(
 		"text",
 		"class",
 	)
-	sample_repository = database.InMemorySampleRepository()
+	sample_repository = inmemory.InMemorySampleRepository()
 	sample_repository.create(sample)
 	client = create_client(sample_repository)
 	updated = client.patch(f"{_SAMPLES_ENDPOINT}/{sample.id}", json=input_data)
@@ -69,15 +69,13 @@ def test_patch_sample(
 
 
 def create_client(
-	sample_repository: database.SampleRepository, task_config: domain.TaskConfig | None = None
+	sample_repository: usecases.SampleRepository, task_config: domain.AnnotationTask | None = None
 ) -> fastapi.testclient.TestClient:
 	"""Create a client for testing."""
 	if task_config is None:
-		task_config = domain.TaskConfig(())
-	estimation_repository = database.SQLiteEstimationRepository(":memory:")
+		task_config = domain.AnnotationTask(())
 	app = annotation.create_app(
 		sample_repository,
-		estimation_repository,
 		task_config,
 		sampling.RandomSampler(),
 		include_static_files=False,

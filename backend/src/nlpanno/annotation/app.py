@@ -2,9 +2,10 @@
 
 import fastapi
 
-from nlpanno import database, sampling, usecases
+from nlpanno import sampling, usecases
 from nlpanno.annotation import api, middlewares, requestcontext, static
 from nlpanno import domain
+from nlpanno.database import inmemory
 
 
 def create_app(

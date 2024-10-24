@@ -1,4 +1,5 @@
 from nlpanno import usecases
+import time
 
 
 class EstimationProcessor:
@@ -18,6 +19,7 @@ class EstimationProcessor:
 		"""Loop until all samples are embedded."""
 		while True:
 			self.process()
+			time.sleep(5)
 
 	def process(self) -> None:
 		"""Start the embedding processor."""

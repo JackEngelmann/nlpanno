@@ -1,42 +1,7 @@
 import json
-from nlpanno import domain, usecases
 import sqlite3
+from nlpanno import domain, usecases
 import torch
-
-
-class InMemorySampleRepository(usecases.SampleRepository):
-	"""Sample repository using an in-memory list."""
-
-	def __init__(self, samples: tuple[domain.Sample, ...]) -> None:
-		self.samples = samples
-
-	def get_by_id(self, id_: domain.Id) -> domain.Sample:
-		for sample in self.samples:
-			if sample.id == id_:
-				return sample
-		raise ValueError(f"Sample with id {id_} not found")
-	
-	def get_all(self) -> tuple[domain.Sample, ...]:
-		return self.samples	
-	
-	def update(self, sample: domain.Sample) -> None:
-		for i, existing_sample in enumerate(self.samples):
-			if existing_sample.id == sample.id:
-				self.samples[i] = sample
-				return
-		raise ValueError(f"Sample with id {sample.id} not found")
-	
-	def get_unlabeled(self) -> tuple[domain.Sample, ...]:
-		return tuple(sample for sample in self.samples if not sample.is_labeled)
-	
-	def get_labeled(self) -> tuple[domain.Sample, ...]:
-		return tuple(sample for sample in self.samples if sample.is_labeled)
-	
-	def get_unembedded(self) -> tuple[domain.Sample, ...]:
-		return tuple(sample for sample in self.samples if not sample.embedding)
-	
-	def create(self, sample: domain.Sample) -> None:
-		self.samples = self.samples + (sample,)
 
 
 class SQLiteSampleRepository(usecases.SampleRepository):
@@ -57,6 +22,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
             CREATE TABLE IF NOT EXISTS samples (
                 id TEXT PRIMARY KEY,
                 text TEXT,
+                text_class TEXT,
                 embedding BLOB
             )
         """)
@@ -80,7 +46,10 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 		if sample.embedding is not None:
 			list_embedding = sample.embedding.tolist()
 			embedding = json.dumps(list_embedding)
-		cursor.execute("INSERT INTO samples (id, text, embedding) VALUES (?, ?, ?)", (sample.id, sample.text, embedding))
+		cursor.execute(
+			"INSERT INTO samples (id, text, text_class, embedding) VALUES (?, ?, ?, ?)",
+			(sample.id, sample.text, sample.text_class, embedding),
+		)
 
 		for estimate in sample.estimates:
 			cursor.execute(
@@ -108,7 +77,10 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 		if sample.embedding is not None:
 			list_embedding = sample.embedding.tolist()
 			embedding = json.dumps(list_embedding)
-		cursor.execute("UPDATE samples SET text = ?, embedding = ? WHERE id = ?", (sample.text, embedding, sample.id))
+		cursor.execute(
+			"UPDATE samples SET text = ?, text_class = ?, embedding = ? WHERE id = ?",
+			(sample.text, sample.text_class, embedding, sample.id)
+		)
 
 		cursor.execute("DELETE FROM estimates WHERE sample_id = ?", (sample.id,))
 		for estimate in sample.estimates:
@@ -126,7 +98,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 	
 	def get_unlabeled(self) -> tuple[domain.Sample, ...]:
 		cursor = self._connection.cursor()
-		cursor.execute("SELECT * FROM samples WHERE text IS NOT NULL")
+		cursor.execute("SELECT * FROM samples WHERE text_class IS NULL")
 		rows = cursor.fetchall()
 		samples = tuple(self._row_to_sample(row) for row in rows)
 		for sample in samples:
@@ -137,7 +109,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 	
 	def get_labeled(self) -> tuple[domain.Sample, ...]:
 		cursor = self._connection.cursor()
-		cursor.execute("SELECT * FROM samples WHERE text IS NULL")
+		cursor.execute("SELECT * FROM samples WHERE text_class IS NOT NULL")
 		rows = cursor.fetchall()
 		samples = tuple(self._row_to_sample(row) for row in rows)
 		for sample in samples:
@@ -165,6 +137,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 		return domain.Sample(
 			id=row["id"],
 			text=row["text"],
+			text_class=row["text_class"],
 			embedding=embedding,
 		)
 	

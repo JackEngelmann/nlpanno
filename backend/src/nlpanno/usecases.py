@@ -1,8 +1,11 @@
 import abc
+import logging
 from typing import Callable
 import collections
 
 from nlpanno import domain, sampling
+
+_LOGGER = logging.getLogger(__name__)
 
 
 EmbeddingFunction = Callable[[list[domain.Sample]], list[domain.Embedding]]
@@ -117,6 +120,7 @@ class EstimateSamplesUseCase:
 		for sample in unlabeled_samples:
 			if sample.embedding is None:
 				continue
+			_LOGGER.debug(f"Estimating sample {sample.id}")
 			class_estimates = self._calculate_class_estimates(sample.embedding, class_embeddings)
 			sample.add_class_estimates(class_estimates)
 			self._sample_repository.update(sample)
