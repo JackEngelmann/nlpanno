@@ -20,4 +20,8 @@ class RandomSampler(Sampler):
 
 	def __call__(self, samples: tuple[domain.Sample, ...]) -> domain.Id:
 		"""Pick a random sample."""
-		return random.sample(samples, 1)[0].id
+		print(samples)
+		print(tuple(sample.id for sample in samples))
+		id_ = random.sample(samples, 1)[0].id
+		print(id_)
+		return id_

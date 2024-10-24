@@ -34,6 +34,16 @@ LOGGING = {
 			"level": "DEBUG",
 			"propagate": True,
 		},
+		"nlpanno.embedding": {
+			"handlers": ["web"],
+			"level": "DEBUG",
+			"propagate": False,
+		},
+		"nlpanno.estimation": {
+			"handlers": ["web"],
+			"level": "DEBUG",
+			"propagate": False,
+		},
 		"uvicorn": {
 			"handlers": ["web"],
 			"level": "INFO",

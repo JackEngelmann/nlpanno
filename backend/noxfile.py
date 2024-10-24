@@ -24,6 +24,7 @@ def mypy(session: nox.Session) -> None:
 	session.install(".[tests,develop]")
 	session.run("mypy", "src/", "tests/")
 
+
 @nox.session
 def uv_pip_compile(session: nox.Session) -> None:
 	session.install("uv")

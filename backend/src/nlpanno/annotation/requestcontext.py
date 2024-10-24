@@ -1,25 +1,23 @@
 """Implementation of dependencies common to all requests."""
 
 import dataclasses
-
 import fastapi
 
-from nlpanno import database, sampling, worker, domain
+from nlpanno import sampling, domain, usecases
 
 
 @dataclasses.dataclass
 class RequestContext:
 	"""Request context."""
 
-	sample_repository: database.SampleRepository
-	task_config: domain.TaskConfig
+	sample_repository: usecases.SampleRepository
+	task_config: domain.AnnotationTask
 	sampler: sampling.Sampler
-	worker: worker.Worker
 
 
 async def _get_request_context(request: fastapi.Request) -> RequestContext:
 	"""Get the request context from the app state."""
-	return request.app.state.request_context
-
+	request_context = request.app.state.request_context
+	return request_context
 
 DEPENDS = fastapi.Depends(_get_request_context)

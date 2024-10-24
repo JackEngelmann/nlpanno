@@ -2,10 +2,10 @@
 
 import fastapi
 import fastapi.testclient
+from nlpanno import domain
 import pytest
 
-from nlpanno import database, sampling, server, domain
-
+from nlpanno import database, sampling, annotation
 
 _SAMPLES_ENDPOINT = "/api/samples"
 _TASK_CONFIG_ENDPOINT = "/api/taskConfig"
@@ -21,17 +21,6 @@ def test_get_task_config() -> None:
 	response = client.get(_TASK_CONFIG_ENDPOINT)
 	assert response.status_code == 200
 	assert response.json() == {"textClasses": ["class 1", "class 2"]}
-
-
-def test_get_samples() -> None:
-	"""Test getting samples."""
-	sample_repository = database.InMemorySampleRepository()
-	sample_repository.create(domain.Sample(domain.create_id(), "text 1", None))
-	sample_repository.create(domain.Sample(domain.create_id(), "text 2", None))
-	client = create_client(sample_repository)
-	response = client.get(_SAMPLES_ENDPOINT)
-	assert response.status_code == 200
-	assert len(response.json()) == 2
 
 
 def test_get_next_sample() -> None:
@@ -50,56 +39,12 @@ def test_get_next_sample() -> None:
 	[
 		(
 			{
-				"text": "updated text",
-			},
-			{
-				"id": "id",
-				"text": "updated text",
-				"textClass": "class",
-				"textClassPredictions": [0.1, 0.2],
-			},
-		),
-		(
-			{
 				"textClass": "updated class",
 			},
 			{
 				"id": "id",
 				"text": "text",
 				"textClass": "updated class",
-				"textClassPredictions": [0.1, 0.2],
-			},
-		),
-		(
-			{
-				"textClass": None,
-			},
-			{
-				"id": "id",
-				"text": "text",
-				"textClass": None,
-				"textClassPredictions": [0.1, 0.2],
-			},
-		),
-		(
-			{
-				"textClassPredictions": [0.2, 0.3],
-			},
-			{
-				"id": "id",
-				"text": "text",
-				"textClass": "class",
-				"textClassPredictions": [0.2, 0.3],
-			},
-		),
-		(
-			{
-				"textClassPredictions": None,
-			},
-			{
-				"id": "id",
-				"text": "text",
-				"textClass": "class",
 				"textClassPredictions": None,
 			},
 		),
@@ -114,7 +59,6 @@ def test_patch_sample(
 		"id",
 		"text",
 		"class",
-		(0.1, 0.2),
 	)
 	sample_repository = database.InMemorySampleRepository()
 	sample_repository.create(sample)
@@ -124,36 +68,18 @@ def test_patch_sample(
 	assert updated.json() == expected_response
 
 
-def test_get_status() -> None:
-	"""Test getting the status of the server."""
-	sample_repository = database.InMemorySampleRepository()
-	client = create_client(sample_repository)
-	response = client.get(_STATUS_ENDPOINT)
-	assert response.status_code == 200
-	assert response.json()["worker"]["isWorking"] is False
-
-
 def create_client(
 	sample_repository: database.SampleRepository, task_config: domain.TaskConfig | None = None
 ) -> fastapi.testclient.TestClient:
+	"""Create a client for testing."""
 	if task_config is None:
 		task_config = domain.TaskConfig(())
-	"""Create a client for testing."""
-	app = server.create_app(
+	estimation_repository = database.SQLiteEstimationRepository(":memory:")
+	app = annotation.create_app(
 		sample_repository,
+		estimation_repository,
 		task_config,
 		sampling.RandomSampler(),
-		lambda: None,
-	)
-	return fastapi.testclient.TestClient(app)
-
-
-@pytest.fixture
-def client(sample_repository: database.SampleRepository) -> fastapi.testclient.TestClient:
-	"""Fixture for fastAPI test client."""
-	app = server.create_app(
-		sample_repository,
-		sampling.RandomSampler(),
-		lambda: None,
+		include_static_files=False,
 	)
 	return fastapi.testclient.TestClient(app)

@@ -1,7 +1,8 @@
 """Static files for the server."""
 
-import fastapi.templating
 import pathlib
+
+import fastapi.templating
 
 _BUILD_DIR = pathlib.Path(__file__).parent.parent.parent.parent.parent / "client" / "build"
 _TEMPLATES_DIR = _BUILD_DIR

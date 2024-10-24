@@ -11,9 +11,14 @@ dependencies = [
     "colorlog",
     "fastapi",
     "pydantic >= 2.0",
+    "pydantic-settings",
     "sentence-transformers",
+    "typer",
     "uvicorn[standard]",
 ]
+
+[project.scripts]
+nlpanno = "nlpanno.main:app"
 
 [project.optional-dependencies]
 develop = [

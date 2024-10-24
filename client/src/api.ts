@@ -114,34 +114,3 @@ export function useSampleStream(): SampleStreamResult {
         errorOccurred
     }
 }
-
-type StatusQueryResult = {
-    data: Status | null
-    isLoading: boolean,
-    errorOccurred: boolean
-}
-
-export function useStatus(pollIntervalMs: number): StatusQueryResult {
-    const [status, setStatus] = useState<Status | null>(null)
-    const [errorOccurred, setErrorOccurred] = useState(false)
-
-    useEffect(() => {
-        const interval = setInterval(async () => {
-            try {
-                const newStatus = await queryStatus()
-                if (JSON.stringify(status) !== JSON.stringify(newStatus)) {
-                    setStatus(newStatus)
-                }
-            } catch {
-                setErrorOccurred(true)
-            }
-        }, pollIntervalMs)
-        return () => clearInterval(interval)
-    }, [setStatus])
-
-    return {
-        data: status,
-        isLoading: !status,
-        errorOccurred
-    }
-}

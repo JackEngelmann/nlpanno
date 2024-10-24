@@ -11,7 +11,7 @@ from nlpanno import domain
 class Dataset:
 	"""Base class for datasets."""
 
-	task_config: domain.TaskConfig
+	task_config: domain.AnnotationTask
 	samples: tuple[domain.Sample, ...]
 
 
@@ -31,7 +31,7 @@ class MTOP(Dataset):
 		samples, task_config = self._read_data()
 		super().__init__(task_config, samples)
 
-	def _read_data(self) -> tuple[tuple[domain.Sample, ...], domain.TaskConfig]:
+	def _read_data(self) -> tuple[tuple[domain.Sample, ...], domain.AnnotationTask]:
 		"""Load data from disk."""
 		samples: list[domain.Sample] = []
 		text_classes: set[str] = set()
@@ -41,7 +41,7 @@ class MTOP(Dataset):
 			sample, text_class = self._parse_line(line)
 			samples.append(sample)
 			text_classes.add(text_class)
-		task_config = domain.TaskConfig(tuple(sorted(text_classes)))
+		task_config = domain.AnnotationTask(tuple(sorted(text_classes)))
 		return tuple(samples), task_config
 
 	def _limit_hit(self, samples: list[domain.Sample]) -> bool:

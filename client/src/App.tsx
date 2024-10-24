@@ -1,8 +1,7 @@
 import { useState } from "react";
 import styles from "./App.module.css";
-import { useSampleStream, useTaskConfig, useStatus } from './api';
+import { useSampleStream, useTaskConfig } from './api';
 import { ClassSelection } from './components/ClassSelection/ClassSelection';
-import { StatusIndicator } from "./components/StatusIndicator/StatusIndicator";
 import { Selector } from "./components/Selector/Selector";
 import { LoadingScreen } from "./components/LoadingScreen/LoadingScreen";
 import { ErrorScreen } from "./components/ErrorScreen/ErrorScreen";
@@ -11,16 +10,15 @@ import { getSortedClassPredictions } from "./classpredictions";
 function App() {
   const taskConfigState = useTaskConfig()
   const sampleStream = useSampleStream()
-  const statusQueryResult = useStatus(10000)
 
   const [selectedSampleIdx, setSelectedSampleIdx] = useState(0)
   const selectNextSample = () => setSelectedSampleIdx(selectedSampleIdx + 1)
   const selectPreviousSample = () => setSelectedSampleIdx(selectedSampleIdx - 1)
 
-  const errorOccurred = taskConfigState.errorOccurred || sampleStream.errorOccurred || statusQueryResult.errorOccurred
+  const errorOccurred = taskConfigState.errorOccurred || sampleStream.errorOccurred
   if (errorOccurred) return <ErrorScreen />
 
-  const isLoading = taskConfigState.isLoading || sampleStream.isLoading || statusQueryResult.isLoading
+  const isLoading = taskConfigState.isLoading || sampleStream.isLoading
   if (isLoading) return <LoadingScreen />
 
   const taskConfig = taskConfigState.data!
@@ -43,7 +41,6 @@ function App() {
         <div className={styles.text}>
           {selectedSample.text}
         </div>
-        <StatusIndicator isWorking={statusQueryResult.data!.worker.isWorking} />
         <Selector
           isFirst={isFirstSample}
           isLast={isLastSample}
