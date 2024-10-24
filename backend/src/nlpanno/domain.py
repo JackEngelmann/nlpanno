@@ -19,6 +19,7 @@ class Entity:
 	id: Optional[Id]
 
 
+# TODO: this class is used inconsistently.
 @dataclasses.dataclass
 class TextClass(Entity):
 	"""Data structure for a text class."""
@@ -30,14 +31,14 @@ class TextClass(Entity):
 class ClassEstimate:
 	"""Data structure for a class estimate."""
 
-	text_class: TextClass
+	text_class: str
 	confidence: float
 
 	def update(self, confidence: float) -> None:
 		self.confidence = confidence
 	
 	@classmethod
-	def create(cls, text_class: TextClass, confidence: float) -> Self:
+	def create(cls, text_class: str, confidence: float) -> Self:
 		return cls(text_class=text_class, confidence=confidence)
 
 
@@ -55,7 +56,7 @@ class Sample(Entity):
 	"""Data structure for a sample."""
 
 	text: str
-	text_class: Optional[TextClass] = None
+	text_class: Optional[str] = None
 	embedding: Optional[Embedding] = None
 	estimates: tuple[ClassEstimate, ...] = ()
 
@@ -63,7 +64,7 @@ class Sample(Entity):
 	def create(cls, text: str) -> Self:
 		return cls(text=text)
 
-	def annotate(self, text_class: TextClass) -> None:
+	def annotate(self, text_class: str) -> None:
 		# TODO: Add annotation service that checks that the text class is valid.
 		self.text_class = text_class
 

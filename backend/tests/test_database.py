@@ -1,6 +1,7 @@
 """Test suite for data module."""
 
 from collections.abc import Generator
+import sqlalchemy.orm
 
 from nlpanno import domain, usecases, database
 import pytest
@@ -84,7 +85,7 @@ class TestSampleRepository:
 		assert unlabeled_samples[0].id == unlabeled_id
 
 
-@pytest.fixture(params=("inmemory", "sqlite"))
+@pytest.fixture(params=("inmemory", "sqlite", "sqlalchemy"))
 def sample_repository(
 	request: pytest.FixtureRequest,
 ) -> Generator[usecases.SampleRepository, None, None]:
@@ -93,4 +94,8 @@ def sample_repository(
 		yield database.InMemorySampleRepository()
 	if request.param == "sqlite":
 		with database.SQLiteSampleRepository(":memory:") as repository:
+			yield repository
+	if request.param == "sqlalchemy":
+		engine = sqlalchemy.create_engine("sqlite://", echo=True)
+		with database.SQLAlchemySampleRepository(engine) as repository:
 			yield repository
