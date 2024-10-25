@@ -20,14 +20,6 @@ class Entity:
     id: Id
 
 
-# TODO: this class is used inconsistently.
-@dataclasses.dataclass
-class TextClass(Entity):
-    """Data structure for a text class."""
-
-    name: str
-
-
 @dataclasses.dataclass
 class ClassEstimate(Entity):
     """Data structure for a class estimate."""
