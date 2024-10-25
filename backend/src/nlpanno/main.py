@@ -16,6 +16,7 @@ import nlpanno.embedding
 import nlpanno.estimation
 import nlpanno.sampling
 from nlpanno import domain
+import sqlalchemy
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,9 +26,7 @@ class Settings(pydantic_settings.BaseSettings):
 
 	# model_config = pydantic_settings.SettingsConfigDict(env_file=".env")
 
-	samples_database_path: str = "samples.db"
-	embeddings_database_path: str = "embeddings.db"
-	estimations_database_path: str = "estimations.db"
+	database_url: str = "sqlite:///samples.db"
 	embedding_model_name: str = "distiluse-base-multilingual-cased-v1"
 	port: int = 8000
 	# TODO: Add dataset options.
@@ -41,7 +40,8 @@ def start_embedding_loop() -> None:
 	"""Start the embedding loop."""
 	logging.basicConfig(level=logging.INFO)
 	settings = Settings()
-	sample_repository = nlpanno.database.SQLiteSampleRepository(settings.samples_database_path)
+	engine = sqlalchemy.create_engine(settings.database_url)
+	sample_repository = nlpanno.database.SQLAlchemySampleRepository(engine)
 	model = sentence_transformers.SentenceTransformer(settings.embedding_model_name)
 
 	def embedding_function(samples: Sequence[domain.Sample]) -> Sequence[domain.Embedding]:
@@ -59,7 +59,8 @@ def start_estimation_loop() -> None:
 	"""Start the estimation loop."""
 	logging.basicConfig(level=logging.INFO)
 	settings = Settings()
-	sample_repository = nlpanno.database.SQLiteSampleRepository(settings.samples_database_path)
+	engine = sqlalchemy.create_engine(settings.database_url)
+	sample_repository = nlpanno.database.SQLAlchemySampleRepository(engine)
 
 	def embedding_aggregation_function(embeddings: Sequence[domain.Embedding]) -> domain.Embedding:
 		stacked = torch.stack(list(embeddings), dim=0)
@@ -93,7 +94,8 @@ def start_annotation() -> None:
 		add_class_to_text=True,
 		limit=1000,
 	)
-	sample_repository = nlpanno.database.SQLiteSampleRepository(settings.samples_database_path)
+	engine = sqlalchemy.create_engine(settings.database_url)
+	sample_repository = nlpanno.database.SQLAlchemySampleRepository(engine)
 	with sample_repository as sample_repository:
 		for sample in mtop_dataset.samples:
 			sample_repository.create(sample)
