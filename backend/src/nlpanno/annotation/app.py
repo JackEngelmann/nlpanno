@@ -1,13 +1,16 @@
 """Implementation of the fastAPI app."""
 
 import fastapi
+from typing import Callable
 
-from nlpanno import domain, sampling, usecases
+from nlpanno import domain, sampling, usecases, infrastructure
 from nlpanno.annotation import api, middlewares, requestcontext, static
+from nlpanno import config
+import sqlalchemy.orm
 
 
 def create_app(
-	sample_repository: usecases.SampleRepository,
+	session_factory: infrastructure.SessionFactory,
 	task_config: domain.AnnotationTask,
 	sampler: sampling.Sampler,
 	include_static_files: bool = True,
@@ -16,7 +19,7 @@ def create_app(
 	app = fastapi.FastAPI()
 
 	app.state.request_context = requestcontext.RequestContext(
-		sample_repository,
+		session_factory,
 		task_config,
 		sampler,
 	)

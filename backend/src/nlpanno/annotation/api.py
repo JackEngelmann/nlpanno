@@ -23,8 +23,8 @@ def get_next_sample(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> transferobject.SampleDTO | None:
 	"""Get the next sample (e.g. for annotation)."""
-	with request_context.sample_repository as sample_repository:
-		use_case = usecases.GetNextSampleUseCase(sample_repository, request_context.sampler)
+	with request_context.session_factory() as session:
+		use_case = usecases.GetNextSampleUseCase(session.sample_repository, request_context.sampler)
 		sample = use_case()
 	if sample is None:
 		return None
@@ -47,7 +47,8 @@ def patch_sample(
 	request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
 ) -> transferobject.SampleDTO:
 	"""Patch (partial update) a sample."""
-	with request_context.sample_repository as sample_repository:
-		use_case = usecases.AnnotateSampleUseCase(sample_repository)
+	with request_context.session_factory() as session:
+		use_case = usecases.AnnotateSampleUseCase(session.sample_repository)
 		sample = use_case(sample_id, sample_patch.text_class)
+		session.commit()
 	return transferobject.SampleDTO.from_domain_object(sample, ())

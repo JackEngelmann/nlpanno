@@ -29,6 +29,11 @@ LOGGING = {
 		},
 	},
 	"loggers": {
+		"": {
+			"handlers": ["web"],
+			"level": "DEBUG",
+			"propagate": True,
+		},
 		"nlpanno": {
 			"handlers": ["web"],
 			"level": "DEBUG",

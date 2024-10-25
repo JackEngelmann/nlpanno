@@ -5,6 +5,9 @@ import pathlib
 from collections.abc import Iterator
 
 from nlpanno import domain
+import logging
+
+_LOG = logging.getLogger("nlpanno")
 
 
 @dataclasses.dataclass
@@ -28,7 +31,10 @@ class MTOP(Dataset):
 		self._add_class_to_text = add_class_to_text
 		self._limit = limit
 		self._path = path if isinstance(path, pathlib.Path) else pathlib.Path(path)
+		if not self._path.exists():
+			raise ValueError(f"Path does not exist: '{self._path}'")
 		samples, task_config = self._read_data()
+		_LOG.info(f"Samples: {len(samples)}")
 		super().__init__(task_config, samples)
 
 	def _read_data(self) -> tuple[tuple[domain.Sample, ...], domain.AnnotationTask]:
@@ -36,6 +42,7 @@ class MTOP(Dataset):
 		samples: list[domain.Sample] = []
 		text_classes: set[str] = set()
 		for line in self._read_lines():
+			_LOG.info(f"Line: {line}")
 			if self._limit_hit(samples):
 				break
 			sample, text_class = self._parse_line(line)

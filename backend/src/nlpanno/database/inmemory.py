@@ -9,17 +9,6 @@ class InMemorySampleRepository(usecases.SampleRepository):
 	def __init__(self) -> None:
 		self._samples: list[domain.Sample] = []
 
-	def __enter__(self) -> "InMemorySampleRepository":
-		return self
-
-	def __exit__(
-		self,
-		exc_type: type[BaseException] | None,
-		exc_value: BaseException | None,
-		traceback: TracebackType | None,
-	) -> None:
-		pass
-
 	def get_by_id(self, id_: domain.Id) -> domain.Sample:
 		for sample in self._samples:
 			if sample.id == id_:

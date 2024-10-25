@@ -19,5 +19,7 @@ COPY . /app
 # Install the application.
 RUN pip install --no-cache-dir .
 
+EXPOSE 8000
+
 # Run the application.
-CMD ["python", "main.py"]
+CMD ["nlpanno", "start-annotation"]

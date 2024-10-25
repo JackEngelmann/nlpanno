@@ -2,55 +2,47 @@
 
 import logging
 from collections.abc import Sequence
+from typing import Callable
 
-import pydantic_settings
-import sentence_transformers
-import sqlalchemy
-import torch
 import typer
 import uvicorn
 
-import nlpanno.annotation
-import nlpanno.database
-import nlpanno.datasets
-import nlpanno.embedding
-import nlpanno.estimation
-import nlpanno.sampling
-from nlpanno import domain
-
-_LOGGER = logging.getLogger(__name__)
+from nlpanno import config, domain, container, annotation, datasets, infrastructure
 
 
-class Settings(pydantic_settings.BaseSettings):
-	"""Settings for the application."""
-
-	# model_config = pydantic_settings.SettingsConfigDict(env_file=".env")
-
-	database_url: str = "sqlite:///samples.db"
-	embedding_model_name: str = "distiluse-base-multilingual-cased-v1"
-	port: int = 8000
-	# TODO: Add dataset options.
-
+settings = config.ApplicationSettings()
+dependency_container = container.DependencyContainer(settings)
+server_app = None
 
 app = typer.Typer()
+
+
+@app.command()
+def start_annotation() -> None:
+	"""Start the annotation server."""
+	logging.basicConfig(level=logging.DEBUG)
+	sampler = dependency_container.create_sampler()
+	session_factory = dependency_container.create_session_factory()
+	with session_factory() as session:
+		session.create_tables()
+		task_config = _fill_db_with_test_data(session)
+		session.commit()
+
+	global server_app
+	server_app = annotation.create_app(
+		session_factory,
+		task_config,
+		sampler,
+		include_static_files=False,
+	)
+	uvicorn.run("nlpanno.main:server_app", log_config=None, port=settings.port, host=settings.host)
 
 
 @app.command()
 def start_embedding_loop() -> None:
 	"""Start the embedding loop."""
 	logging.basicConfig(level=logging.INFO)
-	settings = Settings()
-	engine = sqlalchemy.create_engine(settings.database_url)
-	sample_repository = nlpanno.database.SQLAlchemySampleRepository(engine)
-	model = sentence_transformers.SentenceTransformer(settings.embedding_model_name)
-
-	def embedding_function(samples: Sequence[domain.Sample]) -> Sequence[domain.Embedding]:
-		texts = list(sample.text for sample in samples)
-		return model.encode(texts, convert_to_tensor=True)  # type: ignore
-
-	embedding_processor = nlpanno.embedding.EmbeddingProcessor(
-		embedding_function, sample_repository
-	)
+	embedding_processor = dependency_container.create_embedding_processor()
 	embedding_processor.loop()
 
 
@@ -58,51 +50,21 @@ def start_embedding_loop() -> None:
 def start_estimation_loop() -> None:
 	"""Start the estimation loop."""
 	logging.basicConfig(level=logging.INFO)
-	settings = Settings()
-	engine = sqlalchemy.create_engine(settings.database_url)
-	sample_repository = nlpanno.database.SQLAlchemySampleRepository(engine)
-
-	def embedding_aggregation_function(embeddings: Sequence[domain.Embedding]) -> domain.Embedding:
-		stacked = torch.stack(list(embeddings), dim=0)
-		return torch.mean(stacked, dim=0)
-
-	def vector_similarity_function(
-		sample_embedding: domain.Embedding, class_embedding: domain.Embedding
-	) -> float:
-		return sentence_transformers.util.pytorch_cos_sim(class_embedding, sample_embedding).item()
-
-	estimation_processor = nlpanno.estimation.EstimationProcessor(
-		sample_repository,
-		embedding_aggregation_function,
-		vector_similarity_function,
-	)
+	estimation_processor = dependency_container.create_estimation_processor()
 	estimation_processor.loop()
 
 
-server_app = None
+def _fill_db_with_test_data(session: infrastructure.Session) -> domain.AnnotationTask:
+	# Skip if the database is already filled.
+	if len(session.sample_repository.get_all()) == 0:
+		return
 
-
-@app.command()
-def start_annotation() -> None:
-	"""Start the annotation server."""
-	settings = Settings()
-	mtop_dataset = nlpanno.datasets.MTOP(
-		# The data for this example can be downloaded from https://fb.me/mtop_dataset.
-		# You need to set the `data_path` to one of the subdirectories
-		# (e.g. `.../de/` for German).
-		"/Users/jackengelmann/Documents/Repositories/nlpanno/data/mtop/de",
+	mtop_dataset = datasets.MTOP(
+		"/app/data",
 		add_class_to_text=True,
-		limit=1000,
+		limit=100,
 	)
-	engine = sqlalchemy.create_engine(settings.database_url)
-	sample_repository = nlpanno.database.SQLAlchemySampleRepository(engine)
-	with sample_repository as sample_repository:
+	if len(session.sample_repository.get_all()) == 0:
 		for sample in mtop_dataset.samples:
-			sample_repository.create(sample)
-	global server_app
-	server_app = nlpanno.annotation.create_app(
-		sample_repository,
-		mtop_dataset.task_config,
-		nlpanno.sampling.RandomSampler(),
-	)
-	uvicorn.run("nlpanno.main:server_app", log_config=None, port=settings.port)
+			session.sample_repository.create(sample)
+	return mtop_dataset.task_config

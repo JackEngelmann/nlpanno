@@ -1,12 +1,15 @@
 import json
-from types import TracebackType
 from typing import Optional, Self
+from nlpanno import infrastructure
 
 import sqlalchemy
 import torch
 from sqlalchemy import orm
 
 from nlpanno import domain, usecases
+import logging
+
+_LOG = logging.getLogger("nlpanno")
 
 
 class Base(sqlalchemy.orm.DeclarativeBase):
@@ -75,25 +78,8 @@ class ClassEstimate(Base):
 class SQLAlchemySampleRepository(usecases.SampleRepository):
 	"""Sample repository using SQLAlchemy."""
 
-	def __init__(self, engine: sqlalchemy.Engine) -> None:
-		self._engine = engine
-
-	def __enter__(self) -> Self:
-		self._session = sqlalchemy.orm.Session(self._engine)
-		Base.metadata.create_all(self._engine)
-		return self
-
-	def __exit__(
-		self,
-		exc_type: type[BaseException] | None,
-		exc_value: BaseException | None,
-		traceback: TracebackType | None,
-	) -> None:
-		self._session.close()
-
-	def add(self, sample: domain.Sample) -> None:
-		persistence_sample = Sample.from_domain(sample)
-		self._session.add(persistence_sample)
+	def __init__(self, session: sqlalchemy.orm.Session) -> None:
+		self._session = session
 
 	def get_by_id(self, sample_id: domain.Id) -> domain.Sample:
 		persistence_sample = self._session.get(Sample, sample_id)
@@ -125,5 +111,44 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
 		return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
 
 	def create(self, sample: domain.Sample) -> None:
+		_LOG.info("Creating sample")
+		_LOG.info(f"Sample: {sample}")
 		persistence_sample = Sample.from_domain(sample)
 		self._session.add(persistence_sample)
+
+
+# TODO: add rollback.
+class SQLAlchemyDatabaseSession(infrastructure.Session):
+	"""Database session using SQLAlchemy."""
+
+	def __init__(self, engine: sqlalchemy.engine.Engine) -> None:
+		self._engine = engine
+
+	def __enter__(self) -> Self:
+		self._session = sqlalchemy.orm.Session(self._engine)
+		return self
+
+	def __exit__(self, exc_type, exc_value, traceback) -> None:
+		self._session.close()
+
+	@property
+	def sample_repository(self) -> SQLAlchemySampleRepository:
+		return SQLAlchemySampleRepository(self._session)
+
+	def commit(self) -> None:
+		_LOG.info("Committing session")
+		self._session.commit()
+
+	def create_tables(self) -> None:
+		_LOG.info("Creating tables")
+		Base.metadata.create_all(self._engine)
+
+
+class SQLAlchemySessionFactory(infrastructure.SessionFactory):
+	"""Session factory using SQLAlchemy."""
+
+	def __init__(self, engine: sqlalchemy.engine.Engine) -> None:
+		self._engine = engine
+
+	def __call__(self) -> infrastructure.Session:
+		return SQLAlchemyDatabaseSession(self._engine)

@@ -1,8 +1,63 @@
 services:
+  annotation-client:
+    platform: linux/amd64
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - 5173:5173
   annotation-server:
     platform: linux/amd64
     build:
       context: ./backend
       dockerfile: Dockerfile
+    environment:
+      - NLPANNO_DATABASE_URL=postgresql://postgres:postgres@db:5432/nlpanno
+      - NLPANNO_HOST=0.0.0.0
     ports:
       - 8000:8000
+    depends_on:
+      - db
+  embedding-loop:
+    platform: linux/amd64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["nlpanno", "start-embedding-loop"]
+    environment:
+      - NLPANNO_DATABASE_URL=postgresql://postgres:postgres@db:5432/nlpanno
+      - NLPANNO_HOST=0.0.0.0
+    depends_on:
+      - db
+  estimation-loop:
+    platform: linux/amd64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["nlpanno", "start-estimation-loop"]
+    environment:
+      - NLPANNO_DATABASE_URL=postgresql://postgres:postgres@db:5432/nlpanno
+      - NLPANNO_HOST=0.0.0.0
+    depends_on:
+      - db
+  db:
+    image: postgres:16
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nlpanno
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 'teste@teste.com'
+      PGADMIN_DEFAULT_PASSWORD: 'teste'
+    ports:
+      - 16543:80
+    volumes:
+      - ./pgservers.json:/pgadmin4/servers.json
+volumes:
+  postgres_data:

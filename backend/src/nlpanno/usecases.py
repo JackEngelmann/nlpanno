@@ -19,21 +19,6 @@ class SampleRepository(abc.ABC):
 	"""Base class for all sample repositories."""
 
 	@abc.abstractmethod
-	def __enter__(self) -> Self:
-		"""Enter the context."""
-		raise NotImplementedError()
-
-	@abc.abstractmethod
-	def __exit__(
-		self,
-		exc_type: type[BaseException] | None,
-		exc_value: BaseException | None,
-		traceback: TracebackType | None,
-	) -> None:
-		"""Exit the context."""
-		raise NotImplementedError()
-
-	@abc.abstractmethod
 	def get_by_id(self, id_: domain.Id) -> domain.Sample:
 		"""Get a sample by the unique identifier."""
 		raise NotImplementedError()
