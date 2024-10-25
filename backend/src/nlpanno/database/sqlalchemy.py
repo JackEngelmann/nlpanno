@@ -1,13 +1,13 @@
 import json
+import logging
+from types import TracebackType
 from typing import Optional, Self
-from nlpanno import infrastructure
 
 import sqlalchemy
 import torch
 from sqlalchemy import orm
 
-from nlpanno import domain, usecases
-import logging
+from nlpanno import domain, infrastructure, usecases
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -118,7 +118,7 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
 
 
 # TODO: add rollback.
-class SQLAlchemyDatabaseSession(infrastructure.Session):
+class SQLAlchemySession(infrastructure.Session):
 	"""Database session using SQLAlchemy."""
 
 	def __init__(self, engine: sqlalchemy.engine.Engine) -> None:
@@ -128,7 +128,12 @@ class SQLAlchemyDatabaseSession(infrastructure.Session):
 		self._session = sqlalchemy.orm.Session(self._engine)
 		return self
 
-	def __exit__(self, exc_type, exc_value, traceback) -> None:
+	def __exit__(
+		self,
+		exc_type: type[Exception] | None,
+		exc_value: Exception | None,
+		traceback: TracebackType | None,
+	) -> None:
 		self._session.close()
 
 	@property
@@ -151,4 +156,4 @@ class SQLAlchemySessionFactory(infrastructure.SessionFactory):
 		self._engine = engine
 
 	def __call__(self) -> infrastructure.Session:
-		return SQLAlchemyDatabaseSession(self._engine)
+		return SQLAlchemySession(self._engine)

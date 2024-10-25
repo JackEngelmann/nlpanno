@@ -1,11 +1,11 @@
 """Utilities for loading common datasets."""
 
 import dataclasses
+import logging
 import pathlib
 from collections.abc import Iterator
 
 from nlpanno import domain
-import logging
 
 _LOG = logging.getLogger("nlpanno")
 

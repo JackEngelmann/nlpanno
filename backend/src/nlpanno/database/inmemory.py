@@ -1,6 +1,7 @@
 from types import TracebackType
+from typing import Self
 
-from nlpanno import domain, usecases
+from nlpanno import domain, infrastructure, usecases
 
 
 class InMemorySampleRepository(usecases.SampleRepository):
@@ -36,3 +37,37 @@ class InMemorySampleRepository(usecases.SampleRepository):
 
 	def create(self, sample: domain.Sample) -> None:
 		self._samples.append(sample)
+
+
+class InMemorySession(infrastructure.Session):
+	def __init__(self) -> None:
+		self._sample_repository = InMemorySampleRepository()
+
+	def __enter__(self) -> Self:
+		return self
+
+	def __exit__(
+		self,
+		exc_type: type[Exception] | None,
+		exc_value: Exception | None,
+		traceback: TracebackType | None,
+	) -> None:
+		pass
+
+	@property
+	def sample_repository(self) -> InMemorySampleRepository:
+		return self._sample_repository
+
+	def commit(self) -> None:
+		pass
+
+	def create_tables(self) -> None:
+		pass
+
+
+class InMemorySessionFactory(infrastructure.SessionFactory):
+	def __init__(self) -> None:
+		self._session = InMemorySession()
+
+	def __call__(self) -> infrastructure.Session:
+		return self._session

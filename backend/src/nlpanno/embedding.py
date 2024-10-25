@@ -29,7 +29,9 @@ class EmbeddingProcessor:
 		"""Start the embedding processor."""
 		_LOGGER.info("starting processing")
 		with self._session_factory() as session:
-			use_case = usecases.EmbedAllSamplesUseCase(session.sample_repository, self._embedding_function)
+			use_case = usecases.EmbedAllSamplesUseCase(
+				session.sample_repository, self._embedding_function
+			)
 			did_work = use_case()
 			session.commit()
 		return did_work

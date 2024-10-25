@@ -2,8 +2,7 @@ import abc
 import collections
 import logging
 from collections.abc import Sequence
-from types import TracebackType
-from typing import Callable, Self
+from typing import Callable
 
 from nlpanno import domain, sampling
 

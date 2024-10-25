@@ -1,12 +1,9 @@
 """Implementation of the fastAPI app."""
 
 import fastapi
-from typing import Callable
 
-from nlpanno import domain, sampling, usecases, infrastructure
+from nlpanno import domain, infrastructure, sampling
 from nlpanno.annotation import api, middlewares, requestcontext, static
-from nlpanno import config
-import sqlalchemy.orm
 
 
 def create_app(

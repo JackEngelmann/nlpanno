@@ -68,6 +68,8 @@ packaging==24.1
     #   transformers
 pillow==11.0.0
     # via sentence-transformers
+psycopg2-binary==2.9.10
+    # via nlpanno (pyproject.toml)
 pydantic==2.9.2
     # via
     #   nlpanno (pyproject.toml)

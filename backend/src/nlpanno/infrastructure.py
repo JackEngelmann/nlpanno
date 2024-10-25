@@ -1,5 +1,7 @@
 import abc
+from types import TracebackType
 from typing import Self
+
 from nlpanno import usecases
 
 
@@ -11,7 +13,12 @@ class Session(abc.ABC):
 		raise NotImplementedError()
 
 	@abc.abstractmethod
-	def __exit__(self, exc_type, exc_value, traceback) -> None:
+	def __exit__(
+		self,
+		exc_type: type[Exception] | None,
+		exc_value: Exception | None,
+		traceback: TracebackType | None,
+	) -> None:
 		raise NotImplementedError()
 
 	@property
@@ -22,7 +29,7 @@ class Session(abc.ABC):
 	@abc.abstractmethod
 	def commit(self) -> None:
 		raise NotImplementedError()
-	
+
 	@abc.abstractmethod
 	def create_tables(self) -> None:
 		raise NotImplementedError()

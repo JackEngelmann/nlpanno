@@ -1,14 +1,11 @@
 """Example script to annotate MTOP data aided by mean embeddings."""
 
 import logging
-from collections.abc import Sequence
-from typing import Callable
 
 import typer
 import uvicorn
 
-from nlpanno import config, domain, container, annotation, datasets, infrastructure
-
+from nlpanno import annotation, config, container, datasets, domain, infrastructure
 
 settings = config.ApplicationSettings()
 dependency_container = container.DependencyContainer(settings)
@@ -55,16 +52,15 @@ def start_estimation_loop() -> None:
 
 
 def _fill_db_with_test_data(session: infrastructure.Session) -> domain.AnnotationTask:
-	# Skip if the database is already filled.
-	if len(session.sample_repository.get_all()) == 0:
-		return
-
 	mtop_dataset = datasets.MTOP(
 		"/app/data",
 		add_class_to_text=True,
 		limit=100,
 	)
-	if len(session.sample_repository.get_all()) == 0:
+
+	is_empty = len(session.sample_repository.get_all()) == 0
+	if is_empty:
 		for sample in mtop_dataset.samples:
 			session.sample_repository.create(sample)
+
 	return mtop_dataset.task_config
