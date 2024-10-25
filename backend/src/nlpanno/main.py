@@ -5,6 +5,7 @@ from collections.abc import Sequence
 
 import pydantic_settings
 import sentence_transformers
+import sqlalchemy
 import torch
 import typer
 import uvicorn
@@ -16,7 +17,6 @@ import nlpanno.embedding
 import nlpanno.estimation
 import nlpanno.sampling
 from nlpanno import domain
-import sqlalchemy
 
 _LOGGER = logging.getLogger(__name__)
 

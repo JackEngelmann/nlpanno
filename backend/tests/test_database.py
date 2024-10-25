@@ -86,16 +86,13 @@ class TestSampleRepository:
 		assert unlabeled_samples[0].id == unlabeled_id
 
 
-@pytest.fixture(params=("inmemory", "sqlite", "sqlalchemy"))
+@pytest.fixture(params=("inmemory", "sqlalchemy"))
 def sample_repository(
 	request: pytest.FixtureRequest,
 ) -> Generator[usecases.SampleRepository, None, None]:
 	"""Sample repository fixture."""
 	if request.param == "inmemory":
 		yield database.InMemorySampleRepository()
-	if request.param == "sqlite":
-		with database.SQLiteSampleRepository(":memory:") as repository:
-			yield repository
 	if request.param == "sqlalchemy":
 		engine = sqlalchemy.create_engine("sqlite://", echo=True)
 		with database.SQLAlchemySampleRepository(engine) as repository:
