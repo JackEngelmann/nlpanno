@@ -4,8 +4,8 @@ import fastapi
 import fastapi.staticfiles
 import fastapi.templating
 
-from nlpanno.annotation import requestcontext, transferobject, types
 from nlpanno import usecases
+from nlpanno.annotation import requestcontext, transferobject, types
 
 router = fastapi.APIRouter(prefix="/api")
 
@@ -26,9 +26,13 @@ def get_next_sample(
 	with request_context.sample_repository as sample_repository:
 		use_case = usecases.GetNextSampleUseCase(sample_repository, request_context.sampler)
 		sample = use_case()
-	
+	if sample is None:
+		return None
+
 	# TODO: refactor to use usecase or DTO.
-	confidence_by_class = {estimate.text_class: estimate.confidence for estimate in sample.estimates}
+	confidence_by_class = {
+		estimate.text_class: estimate.confidence for estimate in sample.estimates
+	}
 	text_class_predictions = tuple(
 		confidence_by_class.get(text_class) or 0.0
 		for text_class in request_context.task_config.text_classes

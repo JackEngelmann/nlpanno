@@ -12,7 +12,7 @@ from nlpanno.annotation import transferobject
 		(
 			domain.Sample("id", "text", "text class"),
 			transferobject.SampleDTO(
-				id="id", text="text", text_class="text class", text_class_predictions=None
+				id="id", text="text", text_class="text class", text_class_predictions=()
 			),
 		),
 	],
@@ -21,7 +21,7 @@ def test_sample_from_domain_object(
 	input_data: domain.Sample, expected_output: transferobject.SampleDTO
 ) -> None:
 	"""Test creating a sample data transfer object from a domain object."""
-	dto = transferobject.SampleDTO.from_domain_object(input_data, None)
+	dto = transferobject.SampleDTO.from_domain_object(input_data, ())
 	assert dto == expected_output
 
 

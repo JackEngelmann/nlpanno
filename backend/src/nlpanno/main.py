@@ -1,20 +1,21 @@
 """Example script to annotate MTOP data aided by mean embeddings."""
 
 import logging
+from collections.abc import Sequence
 
-import nlpanno.annotation
 import pydantic_settings
 import sentence_transformers
 import torch
 import typer
 import uvicorn
 
+import nlpanno.annotation
 import nlpanno.database
 import nlpanno.datasets
-from nlpanno import domain
 import nlpanno.embedding
 import nlpanno.estimation
 import nlpanno.sampling
+from nlpanno import domain
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,11 +44,13 @@ def start_embedding_loop() -> None:
 	sample_repository = nlpanno.database.SQLiteSampleRepository(settings.samples_database_path)
 	model = sentence_transformers.SentenceTransformer(settings.embedding_model_name)
 
-	def embedding_function(texts: list[domain.Sample]) -> list[domain.Embedding]:
-		texts = tuple(sample.text for sample in texts)
+	def embedding_function(samples: Sequence[domain.Sample]) -> Sequence[domain.Embedding]:
+		texts = list(sample.text for sample in samples)
 		return model.encode(texts, convert_to_tensor=True)  # type: ignore
 
-	embedding_processor = nlpanno.embedding.EmbeddingProcessor(embedding_function, sample_repository)
+	embedding_processor = nlpanno.embedding.EmbeddingProcessor(
+		embedding_function, sample_repository
+	)
 	embedding_processor.loop()
 
 
@@ -58,10 +61,13 @@ def start_estimation_loop() -> None:
 	settings = Settings()
 	sample_repository = nlpanno.database.SQLiteSampleRepository(settings.samples_database_path)
 
-	def embedding_aggregation_function(embeddings: list[domain.Embedding]) -> torch.Tensor:
-		return torch.mean(torch.stack(embeddings, dim=0), dim=0)
+	def embedding_aggregation_function(embeddings: Sequence[domain.Embedding]) -> domain.Embedding:
+		stacked = torch.stack(list(embeddings), dim=0)
+		return torch.mean(stacked, dim=0)
 
-	def vector_similarity_function(sample_embedding: domain.Embedding, class_embedding: domain.Embedding) -> float:
+	def vector_similarity_function(
+		sample_embedding: domain.Embedding, class_embedding: domain.Embedding
+	) -> float:
 		return sentence_transformers.util.pytorch_cos_sim(class_embedding, sample_embedding).item()
 
 	estimation_processor = nlpanno.estimation.EstimationProcessor(

@@ -1,5 +1,6 @@
-from nlpanno import usecases
 import time
+
+from nlpanno import usecases
 
 
 class EstimationProcessor:

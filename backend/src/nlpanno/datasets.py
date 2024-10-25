@@ -41,7 +41,8 @@ class MTOP(Dataset):
 			sample, text_class = self._parse_line(line)
 			samples.append(sample)
 			text_classes.add(text_class)
-		task_config = domain.AnnotationTask(tuple(sorted(text_classes)))
+		sorted_text_classes = tuple(sorted(text_classes))
+		task_config = domain.AnnotationTask(sorted_text_classes)
 		return tuple(samples), task_config
 
 	def _limit_hit(self, samples: list[domain.Sample]) -> bool:

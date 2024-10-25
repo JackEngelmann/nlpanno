@@ -1,20 +1,37 @@
 import abc
-import logging
-from typing import Callable
 import collections
+import logging
+from collections.abc import Sequence
+from types import TracebackType
+from typing import Callable, Self
 
 from nlpanno import domain, sampling
 
 _LOGGER = logging.getLogger(__name__)
 
 
-EmbeddingFunction = Callable[[list[domain.Sample]], list[domain.Embedding]]
-EmbeddingAggregationFunction = Callable[[list[domain.Embedding]], domain.Embedding]
+EmbeddingFunction = Callable[[Sequence[domain.Sample]], Sequence[domain.Embedding]]
+EmbeddingAggregationFunction = Callable[[Sequence[domain.Embedding]], domain.Embedding]
 VectorSimilarityFunction = Callable[[domain.Embedding, domain.Embedding], float]
 
 
 class SampleRepository(abc.ABC):
 	"""Base class for all sample repositories."""
+
+	@abc.abstractmethod
+	def __enter__(self) -> Self:
+		"""Enter the context."""
+		raise NotImplementedError()
+
+	@abc.abstractmethod
+	def __exit__(
+		self,
+		exc_type: type[BaseException] | None,
+		exc_value: BaseException | None,
+		traceback: TracebackType | None,
+	) -> None:
+		"""Exit the context."""
+		raise NotImplementedError()
 
 	@abc.abstractmethod
 	def get_by_id(self, id_: domain.Id) -> domain.Sample:
@@ -59,10 +76,12 @@ class GetNextSampleUseCase:
 		self._sample_repository = sample_repository
 		self._sampler = sampler
 
-	def __call__(self) -> domain.Sample:
+	def __call__(self) -> domain.Sample | None:
 		"""Get the next sample for annotation."""
 		unlabeled_samples = self._sample_repository.get_unlabeled()
 		sample_id = self._sampler(unlabeled_samples)
+		if sample_id is None:
+			return None
 		return self._sample_repository.get_by_id(sample_id)
 
 
@@ -72,7 +91,7 @@ class AnnotateSampleUseCase:
 	def __init__(self, sample_repository: SampleRepository) -> None:
 		self._sample_repository = sample_repository
 
-	def __call__(self, sample_id: domain.Id, text_class: domain.TextClass) -> domain.Sample:
+	def __call__(self, sample_id: domain.Id, text_class: str | None) -> domain.Sample:
 		"""Annotate a sample."""
 		sample = self._sample_repository.get_by_id(sample_id)
 		sample.annotate(text_class)
@@ -83,7 +102,9 @@ class AnnotateSampleUseCase:
 class EmbedAllSamplesUseCase:
 	"""Usecase for embedding all samples."""
 
-	def __init__(self, sample_repository: SampleRepository, embedding_function: EmbeddingFunction) -> None:
+	def __init__(
+		self, sample_repository: SampleRepository, embedding_function: EmbeddingFunction
+	) -> None:
 		self._sample_repository = sample_repository
 		self._embedding_function = embedding_function
 
@@ -124,20 +145,22 @@ class EstimateSamplesUseCase:
 			class_estimates = self._calculate_class_estimates(sample.embedding, class_embeddings)
 			sample.add_class_estimates(class_estimates)
 			self._sample_repository.update(sample)
-    
+
 	def _calculate_class_estimates(
 		self, sample_embedding: domain.Embedding, class_embeddings: dict[str, domain.Embedding]
 	) -> tuple[domain.ClassEstimate, ...]:
 		class_estimates = []
 		for text_class, class_embedding in class_embeddings.items():
 			similarity = self._vector_similarity_function(sample_embedding, class_embedding)
-			class_estimates.append(domain.ClassEstimate(text_class, similarity))
+			class_estimates.append(domain.ClassEstimate.create(text_class, similarity))
 		return tuple(class_estimates)
 
-	def _calculate_class_embeddings(self, labeled_samples: tuple[domain.Sample, ...]) -> dict[str, domain.Embedding]:
+	def _calculate_class_embeddings(
+		self, labeled_samples: tuple[domain.Sample, ...]
+	) -> dict[str, domain.Embedding]:
 		embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
 		for sample in labeled_samples:
-			if sample.embedding is None:
+			if sample.embedding is None or sample.text_class is None:
 				continue
 			embeddings_by_class[sample.text_class].append(sample.embedding)
 

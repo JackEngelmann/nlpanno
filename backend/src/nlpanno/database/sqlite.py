@@ -1,7 +1,10 @@
 import json
 import sqlite3
-from nlpanno import domain, usecases
+from types import TracebackType
+
 import torch
+
+from nlpanno import domain, usecases
 
 
 class SQLiteSampleRepository(usecases.SampleRepository):
@@ -9,13 +12,21 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 
 	def __init__(self, database_path: str) -> None:
 		self._database_path = database_path
-	
+
 	def __enter__(self) -> "SQLiteSampleRepository":
 		self._connection = sqlite3.connect(self._database_path)
 		self._create_table()
 		self._connection.row_factory = sqlite3.Row
 		return self
-	
+
+	def __exit__(
+		self,
+		exc_type: type[BaseException] | None,
+		exc_value: BaseException | None,
+		traceback: TracebackType | None,
+	) -> None:
+		self._connection.close()
+
 	def _create_table(self) -> None:
 		cursor = self._connection.cursor()
 		cursor.execute("""
@@ -36,10 +47,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
             )
 		""")
 		self._connection.commit()
-	
-	def __exit__(self, exc_type, exc_value, traceback) -> None:
-		self._connection.close()
-	
+
 	def create(self, sample: domain.Sample) -> None:
 		cursor = self._connection.cursor()
 		embedding = None
@@ -57,7 +65,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 				(sample.id, estimate.text_class, estimate.confidence),
 			)
 		self._connection.commit()
-	
+
 	def get_by_id(self, id_: domain.Id) -> domain.Sample:
 		cursor = self._connection.cursor()
 		cursor.execute("SELECT * FROM samples WHERE id = ?", (id_,))
@@ -69,7 +77,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 		rows = cursor.fetchall()
 		sample.estimates = tuple(self._row_to_estimate(row) for row in rows)
 		return sample
-	
+
 	def update(self, sample: domain.Sample) -> None:
 		cursor = self._connection.cursor()
 		# TODO: Remove duplication with create.
@@ -79,7 +87,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 			embedding = json.dumps(list_embedding)
 		cursor.execute(
 			"UPDATE samples SET text = ?, text_class = ?, embedding = ? WHERE id = ?",
-			(sample.text, sample.text_class, embedding, sample.id)
+			(sample.text, sample.text_class, embedding, sample.id),
 		)
 
 		cursor.execute("DELETE FROM estimates WHERE sample_id = ?", (sample.id,))
@@ -89,13 +97,13 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 				(sample.id, estimate.text_class, estimate.confidence),
 			)
 		self._connection.commit()
-	
+
 	def get_all(self) -> tuple[domain.Sample, ...]:
 		cursor = self._connection.cursor()
 		cursor.execute("SELECT * FROM samples")
 		rows = cursor.fetchall()
 		return tuple(self._row_to_sample(row) for row in rows)
-	
+
 	def get_unlabeled(self) -> tuple[domain.Sample, ...]:
 		cursor = self._connection.cursor()
 		cursor.execute("SELECT * FROM samples WHERE text_class IS NULL")
@@ -106,7 +114,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 			rows = cursor.fetchall()
 			sample.estimates = tuple(self._row_to_estimate(row) for row in rows)
 		return samples
-	
+
 	def get_labeled(self) -> tuple[domain.Sample, ...]:
 		cursor = self._connection.cursor()
 		cursor.execute("SELECT * FROM samples WHERE text_class IS NOT NULL")
@@ -117,7 +125,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 			rows = cursor.fetchall()
 			sample.estimates = tuple(self._row_to_estimate(row) for row in rows)
 		return samples
-	
+
 	def get_unembedded(self) -> tuple[domain.Sample, ...]:
 		cursor = self._connection.cursor()
 		cursor.execute("SELECT * FROM samples WHERE embedding IS NULL")
@@ -128,7 +136,7 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 			rows = cursor.fetchall()
 			sample.estimates = tuple(self._row_to_estimate(row) for row in rows)
 		return samples
-	
+
 	def _row_to_sample(self, row: sqlite3.Row) -> domain.Sample:
 		embedding = None
 		if row["embedding"] is not None:
@@ -140,9 +148,10 @@ class SQLiteSampleRepository(usecases.SampleRepository):
 			text_class=row["text_class"],
 			embedding=embedding,
 		)
-	
+
 	def _row_to_estimate(self, row: sqlite3.Row) -> domain.ClassEstimate:
 		return domain.ClassEstimate(
+			id=row["id"],
 			text_class=row["text_class"],
 			confidence=row["confidence"],
 		)

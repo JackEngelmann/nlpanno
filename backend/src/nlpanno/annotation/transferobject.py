@@ -1,6 +1,6 @@
 """Types and utilities for implementing the service/API."""
 
-from typing import Any, Optional
+from typing import Optional
 
 import pydantic
 
@@ -11,11 +11,6 @@ class BaseDTO(pydantic.BaseModel):
 	"""Base data transfer object."""
 
 	model_config = pydantic.ConfigDict(frozen=True)
-
-	@classmethod
-	def from_domain_object(cls, domain_object: Any) -> "BaseDTO":  # noqa: ANN401
-		"""Create a data transfer object from a domain object."""
-		raise NotImplementedError("Subclasses must implement this method.")
 
 
 class SampleDTO(BaseDTO):

@@ -1,7 +1,6 @@
 """Test suit for sampling."""
 
-from nlpanno import sampling
-from nlpanno import domain
+from nlpanno import domain, sampling
 
 
 def test_random_sampler() -> None:

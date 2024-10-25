@@ -1,10 +1,11 @@
 """Test suite for data module."""
 
 from collections.abc import Generator
+
+import pytest
 import sqlalchemy.orm
 
-from nlpanno import domain, usecases, database
-import pytest
+from nlpanno import database, domain, usecases
 
 
 class TestSampleRepository:

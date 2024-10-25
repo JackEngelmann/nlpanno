@@ -3,7 +3,6 @@ import time
 
 from nlpanno import usecases
 
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -36,5 +35,3 @@ class EmbeddingProcessor:
 		"""Sleep for 10 seconds."""
 		_LOGGER.info("No work done, sleeping for 10 seconds.")
 		time.sleep(10)
-
-

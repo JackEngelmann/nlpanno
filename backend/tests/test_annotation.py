@@ -2,11 +2,10 @@
 
 import fastapi
 import fastapi.testclient
-from nlpanno import domain
-from nlpanno.database import inmemory
 import pytest
 
-from nlpanno import sampling, annotation, usecases
+from nlpanno import annotation, domain, sampling, usecases
+from nlpanno.database import inmemory
 
 _SAMPLES_ENDPOINT = "/api/samples"
 _TASK_CONFIG_ENDPOINT = "/api/taskConfig"
