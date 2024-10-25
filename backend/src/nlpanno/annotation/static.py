@@ -12,13 +12,13 @@ _TEMPLATES = fastapi.templating.Jinja2Templates(directory=_TEMPLATES_DIR)
 
 
 def create_main_page_html_response(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
-	"""Create a main page HTML response."""
-	return _TEMPLATES.TemplateResponse(_MAIN_PAGE_FILENAME, {"request": request})
+    """Create a main page HTML response."""
+    return _TEMPLATES.TemplateResponse(_MAIN_PAGE_FILENAME, {"request": request})
 
 
 def mount_static_files(app: fastapi.FastAPI) -> None:
-	"""Mount the static files."""
-	app.mount("/assets", fastapi.staticfiles.StaticFiles(directory=_STATIC_DIR), name="static")
+    """Mount the static files."""
+    app.mount("/assets", fastapi.staticfiles.StaticFiles(directory=_STATIC_DIR), name="static")
 
 
 router = fastapi.APIRouter()
@@ -26,5 +26,5 @@ router = fastapi.APIRouter()
 
 @router.get("/")
 async def serve_main_html_page(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
-	"""Serve the main HTML page."""
-	return create_main_page_html_response(request)
+    """Serve the main HTML page."""
+    return create_main_page_html_response(request)

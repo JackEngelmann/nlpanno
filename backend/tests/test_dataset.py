@@ -11,27 +11,27 @@ _MTOP_TEXT = "Haben mir Ben und Leroy heute geschrieben"
 
 
 class TestMtop:
-	"""Tests for the MTOP dataset."""
+    """Tests for the MTOP dataset."""
 
-	@pytest.fixture
-	def input_dir(self, tmp_path: pathlib.Path) -> pathlib.Path:
-		"""Path to the input directory."""
-		with open(tmp_path / "eval.txt", "w") as file:
-			file.write(_MTOP_LINE)
-			file.write("\n")
-		return tmp_path
+    @pytest.fixture
+    def input_dir(self, tmp_path: pathlib.Path) -> pathlib.Path:
+        """Path to the input directory."""
+        with open(tmp_path / "eval.txt", "w") as file:
+            file.write(_MTOP_LINE)
+            file.write("\n")
+        return tmp_path
 
-	def test_initiation(self, input_dir: pathlib.Path) -> None:
-		"""Test initiation of the MTOP dataset."""
-		dataset = datasets.MTOP(input_dir)
-		assert len(dataset.samples) == 1
-		assert dataset.samples[0].text == _MTOP_TEXT
-		# Ground truth should be None, so that the user can annotate it.
-		assert dataset.samples[0].text_class is None
-		assert dataset.task_config.text_classes == (_MTOP_TEXT_CLASS,)
+    def test_initiation(self, input_dir: pathlib.Path) -> None:
+        """Test initiation of the MTOP dataset."""
+        dataset = datasets.MTOP(input_dir)
+        assert len(dataset.samples) == 1
+        assert dataset.samples[0].text == _MTOP_TEXT
+        # Ground truth should be None, so that the user can annotate it.
+        assert dataset.samples[0].text_class is None
+        assert dataset.task_config.text_classes == (_MTOP_TEXT_CLASS,)
 
-	def test_initiation_with_classname(self, input_dir: pathlib.Path) -> None:
-		"""Test initiation of the MTOP dataset with class name."""
-		dataset = datasets.MTOP(input_dir, add_class_to_text=True)
-		assert len(dataset.samples) == 1
-		assert dataset.samples[0].text == f"{_MTOP_TEXT} ({_MTOP_TEXT_CLASS})"
+    def test_initiation_with_classname(self, input_dir: pathlib.Path) -> None:
+        """Test initiation of the MTOP dataset with class name."""
+        dataset = datasets.MTOP(input_dir, add_class_to_text=True)
+        assert len(dataset.samples) == 1
+        assert dataset.samples[0].text == f"{_MTOP_TEXT} ({_MTOP_TEXT_CLASS})"
