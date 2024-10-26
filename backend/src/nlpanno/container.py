@@ -11,8 +11,8 @@ from nlpanno import (
     domain,
     embedding,
     estimation,
-    infrastructure,
     sampling,
+    unitofwork,
     usecases,
 )
 
@@ -28,8 +28,8 @@ class DependencyContainer:
         _LOG.info("Database URL: %s", self.settings.database_url)
         self._engine = sqlalchemy.create_engine(self.settings.database_url)
 
-    def create_session_factory(self) -> infrastructure.SessionFactory:
-        return database.SQLAlchemySessionFactory(self._engine)
+    def create_unit_of_work_factory(self) -> unitofwork.UnitOfWorkFactory:
+        return database.SQLAlchemyUnitOfWorkFactory(self._engine)
 
     def create_embedding_function(self) -> usecases.EmbeddingFunction:
         model = sentence_transformers.SentenceTransformer(self.settings.embedding_model_name)
@@ -62,15 +62,15 @@ class DependencyContainer:
 
     def create_embedding_processor(self) -> embedding.EmbeddingProcessor:
         embedding_function = self.create_embedding_function()
-        session_factory = self.create_session_factory()
-        return embedding.EmbeddingProcessor(embedding_function, session_factory)
+        unit_of_work_factory = self.create_unit_of_work_factory()
+        return embedding.EmbeddingProcessor(embedding_function, unit_of_work_factory)
 
     def create_estimation_processor(self) -> estimation.EstimationProcessor:
-        session_factory = self.create_session_factory()
+        unit_of_work_factory = self.create_unit_of_work_factory()
         embedding_aggregation_function = self.create_embedding_aggregation_function()
         vector_similarity_function = self.create_vector_similarity_function()
         return estimation.EstimationProcessor(
-            session_factory, embedding_aggregation_function, vector_similarity_function
+            unit_of_work_factory, embedding_aggregation_function, vector_similarity_function
         )
 
     def create_sampler(self) -> sampling.Sampler:

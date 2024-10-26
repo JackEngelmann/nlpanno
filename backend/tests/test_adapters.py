@@ -4,15 +4,15 @@ import pytest
 import sqlalchemy.orm
 import torch
 
-from nlpanno import adapters, domain, infrastructure
-from nlpanno.application import usecase
+from nlpanno import adapters, domain
+from nlpanno.application import unitofwork
 
 
 class TestSampleRepository:
     """Test suite for the sample repository."""
 
     @staticmethod
-    def test_get_by_id(session_factory: infrastructure.SessionFactory) -> None:
+    def test_get_by_id(unit_of_work: unitofwork.UnitOfWork) -> None:
         """Test getting a sample by id."""
         sample_to_find = domain.Sample(
             domain.create_id(),
@@ -24,34 +24,34 @@ class TestSampleRepository:
             "text 2",
             "class 2",
         )
-        with session_factory() as session:
-            sample_repository = session.sample_repository
-            sample_repository.create(sample_to_find)
-            sample_repository.create(other_sample)
-            session.commit()
-            found_sample = sample_repository.get_by_id(sample_to_find.id)
+        with unit_of_work:
+            unit_of_work.samples.create(sample_to_find)
+            unit_of_work.samples.create(other_sample)
+            unit_of_work.commit()
+            found_sample = unit_of_work.samples.get_by_id(sample_to_find.id)
             assert found_sample is not None
             assert found_sample == sample_to_find
 
     @staticmethod
-    def test_update(session_factory: infrastructure.SessionFactory) -> None:
+    def test_update(unit_of_work: unitofwork.UnitOfWork) -> None:
         """Test updating a sample."""
         sample_to_update = domain.Sample(
             domain.create_id(),
             "text 1",
             "class 1",
         )
-        with session_factory() as session:
-            sample_repository = session.sample_repository
-            sample_repository.create(sample_to_update)
+        with unit_of_work:
+            unit_of_work.samples.create(sample_to_update)
             updated_sample = domain.Sample(
                 sample_to_update.id,
                 "updated text",
                 "class 2",
             )
-            sample_repository.update(updated_sample)
-            session.commit()
-            assert sample_repository.get_by_id(sample_to_update.id) == updated_sample
+            unit_of_work.samples.update(updated_sample)
+            unit_of_work.commit()
+            found_sample = unit_of_work.samples.get_by_id(sample_to_update.id)
+            assert found_sample is not None
+            assert found_sample == updated_sample
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -65,7 +65,7 @@ class TestSampleRepository:
         ],
     )
     def test_find(
-        session_factory: infrastructure.SessionFactory,
+        unit_of_work: unitofwork.UnitOfWork,
         query: domain.SampleQuery,
         expected_sample_ids: tuple[domain.Id, ...],
     ) -> None:
@@ -76,27 +76,28 @@ class TestSampleRepository:
             domain.Sample("3", "text 3", None, torch.rand(10)),
             domain.Sample("4", "text 4", "class", torch.rand(10)),
         )
-        with session_factory() as session:
-            sample_repository = session.sample_repository
+        with unit_of_work:
             for sample in samples:
-                sample_repository.create(sample)
-            session.commit()
-            found_samples = sample_repository.find(query)
+                unit_of_work.samples.create(sample)
+            unit_of_work.commit()
+            found_samples = unit_of_work.samples.find(query)
         assert len(found_samples) == len(expected_sample_ids)
         found_sample_ids = tuple(sample.id for sample in found_samples)
         assert set(found_sample_ids) == set(expected_sample_ids)
 
 
 @pytest.fixture(params=("inmemory", "sqlalchemy"))
-def session_factory(request: pytest.FixtureRequest) -> infrastructure.SessionFactory:
-    """Session factory fixture."""
+def unit_of_work(request: pytest.FixtureRequest) -> unitofwork.UnitOfWork:
+    """Fixture creating a unit of work."""
     if request.param == "inmemory":
-        return adapters.InMemorySessionFactory()
-    if request.param == "sqlalchemy":
+        factory = adapters.InMemoryUnitOfWorkFactory()
+    elif request.param == "sqlalchemy":
         engine = sqlalchemy.create_engine("sqlite://")
-        session_factory = adapters.SQLAlchemySessionFactory(engine)
-        with session_factory() as session:
-            session.create_tables()
-            session.commit()
-        return session_factory
-    raise ValueError(f"Unknown session factory: {request.param}")
+        factory = adapters.SQLAlchemyUnitOfWorkFactory(engine)
+    else:
+        raise ValueError(f"Unknown unit of work factory: {request.param}")
+    unit_of_work = factory()
+    with unit_of_work:
+        unit_of_work.create_tables()
+        unit_of_work.commit()
+    return unit_of_work

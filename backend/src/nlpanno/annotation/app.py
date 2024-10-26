@@ -2,12 +2,13 @@
 
 import fastapi
 
-from nlpanno import domain, infrastructure, sampling
+from nlpanno import domain, sampling
+from nlpanno.application import usecase, unitofwork
 from nlpanno.annotation import api, middlewares, requestcontext, static
 
 
 def create_app(
-    session_factory: infrastructure.SessionFactory,
+    unit_of_work_factory: unitofwork.UnitOfWorkFactory,
     task_config: domain.AnnotationTask,
     sampler: sampling.Sampler,
     include_static_files: bool = True,
@@ -16,7 +17,7 @@ def create_app(
     app = fastapi.FastAPI()
 
     app.state.request_context = requestcontext.RequestContext(
-        session_factory,
+        unit_of_work_factory,
         task_config,
         sampler,
     )

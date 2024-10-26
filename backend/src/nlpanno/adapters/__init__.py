@@ -1,11 +1,11 @@
-from .inmemory import InMemorySampleRepository, InMemorySession, InMemorySessionFactory
-from .sqlalchemy import SQLAlchemySampleRepository, SQLAlchemySession, SQLAlchemySessionFactory
+from .inmemory import InMemorySampleRepository, InMemoryUnitOfWorkFactory, InMemoryUnitOfWork
+from .sqlalchemy import SQLAlchemySampleRepository, SQLAlchemyUnitOfWorkFactory, SQLAlchemyUnitOfWork
 
 __all__ = [
     "SQLAlchemySampleRepository",
-    "SQLAlchemySessionFactory",
-    "SQLAlchemySession",
+    "SQLAlchemyUnitOfWorkFactory",
+    "SQLAlchemyUnitOfWork",
     "InMemorySampleRepository",
-    "InMemorySessionFactory",
-    "InMemorySession",
+    "InMemoryUnitOfWorkFactory",
+    "InMemoryUnitOfWork",
 ]

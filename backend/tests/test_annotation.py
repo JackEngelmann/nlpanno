@@ -69,14 +69,14 @@ def create_client(
     if task_config is None:
         task_config = domain.AnnotationTask(())
 
-    session_factory = adapters.InMemorySessionFactory()
-    with session_factory() as session:
+    unit_of_work_factory = adapters.InMemoryUnitOfWorkFactory()
+    with unit_of_work_factory() as unit_of_work:
         for sample in samples:
-            session.sample_repository.create(sample)
-        session.commit()
+            unit_of_work.samples.create(sample)
+        unit_of_work.commit()
 
     app = annotation.create_app(
-        session_factory,
+        unit_of_work_factory,
         task_config,
         sampling.RandomSampler(),
         include_static_files=False,

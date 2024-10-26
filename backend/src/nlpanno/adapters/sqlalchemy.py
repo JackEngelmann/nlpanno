@@ -7,8 +7,8 @@ import sqlalchemy
 import torch
 from sqlalchemy import orm
 
-from nlpanno import adapters, domain, infrastructure
-from nlpanno.application import usecase
+from nlpanno import domain
+from nlpanno.application import unitofwork
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -134,8 +134,7 @@ class SQLAlchemySampleRepository(domain.SampleRepository):
         return statement
 
 
-# TODO: add rollback.
-class SQLAlchemySession(infrastructure.Session):
+class SQLAlchemyUnitOfWork(unitofwork.UnitOfWork):
     """Database session using SQLAlchemy."""
 
     def __init__(self, engine: sqlalchemy.engine.Engine) -> None:
@@ -151,10 +150,14 @@ class SQLAlchemySession(infrastructure.Session):
         exc_value: Exception | None,
         traceback: TracebackType | None,
     ) -> None:
+        # Can always rollback, because it does no harm.
+        # If an error occurs, the rollback will be done here.
+        # If the session is committed, the rollback does not change anything.
+        self._session.rollback()
         self._session.close()
 
     @property
-    def sample_repository(self) -> SQLAlchemySampleRepository:
+    def samples(self) -> SQLAlchemySampleRepository:
         return SQLAlchemySampleRepository(self._session)
 
     def commit(self) -> None:
@@ -166,11 +169,11 @@ class SQLAlchemySession(infrastructure.Session):
         Base.metadata.create_all(self._engine)
 
 
-class SQLAlchemySessionFactory(infrastructure.SessionFactory):
+class SQLAlchemyUnitOfWorkFactory(unitofwork.UnitOfWorkFactory):
     """Session factory using SQLAlchemy."""
 
     def __init__(self, engine: sqlalchemy.engine.Engine) -> None:
         self._engine = engine
 
-    def __call__(self) -> infrastructure.Session:
-        return SQLAlchemySession(self._engine)
+    def __call__(self) -> unitofwork.UnitOfWork:
+        return SQLAlchemyUnitOfWork(self._engine)

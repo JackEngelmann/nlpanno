@@ -4,14 +4,15 @@ import dataclasses
 
 import fastapi
 
-from nlpanno import domain, infrastructure, sampling
+from nlpanno import domain, sampling
+from nlpanno.application import unitofwork
 
 
 @dataclasses.dataclass
 class RequestContext:
     """Request context."""
 
-    session_factory: infrastructure.SessionFactory
+    unit_of_work_factory: unitofwork.UnitOfWorkFactory
     task_config: domain.AnnotationTask
     sampler: sampling.Sampler
 

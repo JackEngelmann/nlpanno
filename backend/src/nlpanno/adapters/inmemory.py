@@ -1,7 +1,8 @@
 from types import TracebackType
 from typing import Self
 
-from nlpanno import domain, infrastructure
+from nlpanno import domain
+from nlpanno.application import unitofwork
 
 
 class InMemorySampleRepository(domain.SampleRepository):
@@ -55,7 +56,7 @@ class InMemorySampleRepository(domain.SampleRepository):
         return query.has_embedding == sample_has_embedding
 
 
-class InMemorySession(infrastructure.Session):
+class InMemoryUnitOfWork(unitofwork.UnitOfWork):
     def __init__(self) -> None:
         self._sample_repository = InMemorySampleRepository()
 
@@ -71,7 +72,7 @@ class InMemorySession(infrastructure.Session):
         pass
 
     @property
-    def sample_repository(self) -> InMemorySampleRepository:
+    def samples(self) -> InMemorySampleRepository:
         return self._sample_repository
 
     def commit(self) -> None:
@@ -81,9 +82,9 @@ class InMemorySession(infrastructure.Session):
         pass
 
 
-class InMemorySessionFactory(infrastructure.SessionFactory):
+class InMemoryUnitOfWorkFactory(unitofwork.UnitOfWorkFactory):
     def __init__(self) -> None:
-        self._session = InMemorySession()
+        self._unit_of_work = InMemoryUnitOfWork()
 
-    def __call__(self) -> infrastructure.Session:
-        return self._session
+    def __call__(self) -> unitofwork.UnitOfWork:
+        return self._unit_of_work

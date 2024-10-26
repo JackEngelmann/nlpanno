@@ -5,8 +5,8 @@ from typing import Self
 from nlpanno import domain
 
 
-class Session(abc.ABC):
-    """Base class for database sessions."""
+class UnitOfWork(abc.ABC):
+    """Base class for a unit of work."""
 
     @abc.abstractmethod
     def __enter__(self) -> Self:
@@ -23,7 +23,7 @@ class Session(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def sample_repository(self) -> domain.SampleRepository:
+    def samples(self) -> domain.SampleRepository:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -35,9 +35,9 @@ class Session(abc.ABC):
         raise NotImplementedError()
 
 
-class SessionFactory(abc.ABC):
-    """Base class for session factories."""
+class UnitOfWorkFactory(abc.ABC):
+    """Base class for unit of work factories."""
 
     @abc.abstractmethod
-    def __call__(self) -> Session:
+    def __call__(self) -> UnitOfWork:
         raise NotImplementedError()

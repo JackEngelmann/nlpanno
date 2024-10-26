@@ -1,6 +1,6 @@
 import time
 
-from nlpanno import infrastructure, usecases
+from nlpanno import usecase, unitofwork
 
 
 class EstimationProcessor:
@@ -8,11 +8,11 @@ class EstimationProcessor:
 
     def __init__(
         self,
-        session_factory: infrastructure.SessionFactory,
-        embedding_aggregation_function: usecases.EmbeddingAggregationFunction,
-        vector_similarity_function: usecases.VectorSimilarityFunction,
+        unit_of_work_factory: unitofwork.UnitOfWorkFactory,
+        embedding_aggregation_function: usecase.EmbeddingAggregationFunction,
+        vector_similarity_function: usecase.VectorSimilarityFunction,
     ) -> None:
-        self._session_factory = session_factory
+        self._unit_of_work_factory = unit_of_work_factory
         self._embedding_aggregation_function = embedding_aggregation_function
         self._vector_similarity_function = vector_similarity_function
 
@@ -26,11 +26,5 @@ class EstimationProcessor:
         """Start the embedding processor."""
         # TODO: check is class embeddings are same as in last run.
         # If yes, skip estimation.
-        with self._session_factory() as session:
-            use_case = usecases.EstimateSamplesUseCase(
-                session.sample_repository,
-                self._embedding_aggregation_function,
-                self._vector_similarity_function,
-            )
-            use_case()
-            session.commit()
+        unit_of_work = self._unit_of_work_factory()
+        usecase.estimate_samples(unit_of_work, self._embedding_aggregation_function, self._vector_similarity_function)

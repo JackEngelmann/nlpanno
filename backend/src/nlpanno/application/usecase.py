@@ -2,9 +2,9 @@ import collections
 import logging
 from collections.abc import Sequence
 from typing import Callable
-from nlpanno import domain
 
 from nlpanno import domain, sampling
+from nlpanno.application import unitofwork
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,102 +13,76 @@ EmbeddingFunction = Callable[[Sequence[domain.Sample]], Sequence[domain.Embeddin
 EmbeddingAggregationFunction = Callable[[Sequence[domain.Embedding]], domain.Embedding]
 VectorSimilarityFunction = Callable[[domain.Embedding, domain.Embedding], float]
 
-
-class GetNextSampleUseCase:
-    """Usecase for getting the next sample for annotation."""
-
-    def __init__(self, sample_repository: domain.SampleRepository, sampler: sampling.Sampler) -> None:
-        self._sample_repository = sample_repository
-        self._sampler = sampler
-
-    def __call__(self) -> domain.Sample | None:
-        """Get the next sample for annotation."""
-        unlabeled_samples = self._sample_repository.find(domain.SampleQuery(has_label=False))
-        sample_id = self._sampler(unlabeled_samples)
+def get_next_sample(unit_of_work: unitofwork.UnitOfWork, sampler: sampling.Sampler) -> domain.Sample | None:
+    with unit_of_work:
+        unlabeled_samples = unit_of_work.samples.find(domain.SampleQuery(has_label=False))
+        sample_id = sampler(unlabeled_samples)
         if sample_id is None:
             return None
-        return self._sample_repository.get_by_id(sample_id)
+        return unit_of_work.samples.get_by_id(sample_id)
 
 
-class AnnotateSampleUseCase:
-    """Usecase for annotating a sample."""
-
-    def __init__(self, sample_repository: domain.SampleRepository) -> None:
-        self._sample_repository = sample_repository
-
-    def __call__(self, sample_id: domain.Id, text_class: str | None) -> domain.Sample:
-        """Annotate a sample."""
-        sample = self._sample_repository.get_by_id(sample_id)
+def annotate_sample(unit_of_work: unitofwork.UnitOfWork, sample_id: domain.Id, text_class: str | None) -> domain.Sample:
+    with unit_of_work:
+        sample = unit_of_work.samples.get_by_id(sample_id)
         sample.annotate(text_class)
-        self._sample_repository.update(sample)
+        unit_of_work.samples.update(sample)
+        unit_of_work.commit()
         return sample
 
 
-class EmbedAllSamplesUseCase:
-    """Usecase for embedding all samples."""
-
-    def __init__(
-        self, sample_repository: domain.SampleRepository, embedding_function: EmbeddingFunction
-    ) -> None:
-        self._sample_repository = sample_repository
-        self._embedding_function = embedding_function
-
-    def __call__(self) -> bool:
-        """Embed all samples."""
-        samples = self._sample_repository.find(SampleQuery(has_embedding=False))
+def embed_all_samples(unit_of_work: unitofwork.UnitOfWork, embedding_function: EmbeddingFunction) -> bool:
+    with unit_of_work:
+        samples = unit_of_work.samples.find(domain.SampleQuery(has_embedding=False))
         if len(samples) == 0:
             return False
         embeddings = self._embedding_function(samples)
         for sample, embedding in zip(samples, embeddings):
             sample.embed(embedding)
-            self._sample_repository.update(sample)
+            unit_of_work.samples.update(sample)
+        unit_of_work.commit()
         return True
 
 
-class EstimateSamplesUseCase:
-    """Usecase for estimating samples."""
-
-    def __init__(
-        self,
-        sample_repository: domain.SampleRepository,
-        embedding_aggregation_function: EmbeddingAggregationFunction,
-        vector_similarity_function: VectorSimilarityFunction,
-    ) -> None:
-        self._sample_repository = sample_repository
-        self._embedding_aggregation_function = embedding_aggregation_function
-        self._vector_similarity_function = vector_similarity_function
-
-    def __call__(self) -> None:
-        """Estimate samples."""
-        class_embeddings = self._calculate_class_embeddings()
+def estimate_samples(unit_of_work: unitofwork.UnitOfWork, embedding_aggregation_function: EmbeddingAggregationFunction, vector_similarity_function: VectorSimilarityFunction) -> None:
+    with unit_of_work:
+        class_embeddings = _calculate_class_embeddings(unit_of_work, embedding_aggregation_function)
         query = domain.SampleQuery(has_label=True, has_embedding=True)
-        samples = self._sample_repository.find(query)
+        samples = unit_of_work.samples.find(query)
         for sample in samples:
             _LOGGER.debug(f"Estimating sample {sample.id}")
             assert sample.embedding is not None
-            class_estimates = self._calculate_class_estimates(sample.embedding, class_embeddings)
+            class_estimates = _calculate_class_estimates(sample.embedding, class_embeddings)
             sample.add_class_estimates(class_estimates)
-            self._sample_repository.update(sample)
+            unit_of_work.samples.update(sample)
+        unit_of_work.commit()
 
-    def _calculate_class_estimates(
-        self, sample_embedding: domain.Embedding, class_embeddings: dict[str, domain.Embedding]
-    ) -> tuple[domain.ClassEstimate, ...]:
-        class_estimates = []
-        for text_class, class_embedding in class_embeddings.items():
-            similarity = self._vector_similarity_function(sample_embedding, class_embedding)
-            class_estimates.append(domain.ClassEstimate.create(text_class, similarity))
-        return tuple(class_estimates)
 
-    def _calculate_class_embeddings(self) -> dict[str, domain.Embedding]:
-        samples = self._sample_repository.find(domain.SampleQuery(has_embedding=True, has_label=True))
+def _calculate_class_estimates(
+    sample_embedding: domain.Embedding,
+    class_embeddings: dict[str, domain.Embedding],
+    vector_similarity_function: VectorSimilarityFunction,
+) -> tuple[domain.ClassEstimate, ...]:
+    class_estimates = []
+    for text_class, class_embedding in class_embeddings.items():
+        similarity = vector_similarity_function(sample_embedding, class_embedding)
+        class_estimates.append(domain.ClassEstimate.create(text_class, similarity))
+    return tuple(class_estimates)
 
-        embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
-        for sample in samples:
-            assert sample.embedding is not None
-            assert sample.text_class is not None
-            embeddings_by_class[sample.text_class].append(sample.embedding)
 
-        return {
-            text_class: self._embedding_aggregation_function(embeddings)
-            for text_class, embeddings in embeddings_by_class.items()
-        }
+def _calculate_class_embeddings(
+    unit_of_work: unitofwork.UnitOfWork,
+    embedding_aggregation_function: EmbeddingAggregationFunction,
+) -> dict[str, domain.Embedding]:
+    samples = unit_of_work.samples.find(domain.SampleQuery(has_embedding=True, has_label=True))
+    embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
+
+    for sample in samples:
+        assert sample.embedding is not None
+        assert sample.text_class is not None
+        embeddings_by_class[sample.text_class].append(sample.embedding)
+
+    return {
+        text_class: embedding_aggregation_function(embeddings)
+        for text_class, embeddings in embeddings_by_class.items()
+    }

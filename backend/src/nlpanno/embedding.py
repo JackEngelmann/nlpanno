@@ -1,7 +1,7 @@
 import logging
 import time
 
-from nlpanno import infrastructure, usecases
+from nlpanno.application import usecase, unitofwork
 
 _LOGGER = logging.getLogger("nlpanno.embedding")
 
@@ -11,11 +11,11 @@ class EmbeddingProcessor:
 
     def __init__(
         self,
-        embedding_function: usecases.EmbeddingFunction,
-        session_factory: infrastructure.SessionFactory,
+        embedding_function: usecase.EmbeddingFunction,
+        unit_of_work_factory: unitofwork.UnitOfWorkFactory,
     ) -> None:
         self._embedding_function = embedding_function
-        self._session_factory = session_factory
+        self._unit_of_work_factory = unit_of_work_factory
 
     def loop(self) -> None:
         """Loop until all samples are embedded."""
@@ -28,13 +28,8 @@ class EmbeddingProcessor:
     def _process(self) -> bool:
         """Start the embedding processor."""
         _LOGGER.info("starting processing")
-        with self._session_factory() as session:
-            use_case = usecases.EmbedAllSamplesUseCase(
-                session.sample_repository, self._embedding_function
-            )
-            did_work = use_case()
-            session.commit()
-        return did_work
+        unit_of_work = self._unit_of_work_factory()
+        return usecase.embed_all_samples(unit_of_work, self._embedding_function)
 
     def _sleep(self) -> None:
         """Sleep for 10 seconds."""
