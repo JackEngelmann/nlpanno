@@ -4,7 +4,9 @@ import pytest
 import sqlalchemy.orm
 import torch
 
-from nlpanno import adapters, domain
+import nlpanno.adapters.persistence.inmemory
+import nlpanno.adapters.persistence.sqlalchemy
+from nlpanno import domain
 from nlpanno.application import unitofwork
 
 
@@ -91,10 +93,10 @@ def unit_of_work(request: pytest.FixtureRequest) -> unitofwork.UnitOfWork:
     """Fixture creating a unit of work."""
     factory: unitofwork.UnitOfWorkFactory
     if request.param == "inmemory":
-        factory = adapters.InMemoryUnitOfWorkFactory()
+        factory = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWorkFactory()
     elif request.param == "sqlalchemy":
         engine = sqlalchemy.create_engine("sqlite://")
-        factory = adapters.SQLAlchemyUnitOfWorkFactory(engine)
+        factory = nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWorkFactory(engine)
     else:
         raise ValueError(f"Unknown unit of work factory: {request.param}")
     unit_of_work = factory()

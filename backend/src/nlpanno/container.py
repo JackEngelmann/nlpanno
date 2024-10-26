@@ -5,6 +5,7 @@ import sentence_transformers
 import sqlalchemy
 import torch
 
+import nlpanno.adapters.persistence.sqlalchemy
 from nlpanno import (
     adapters,
     config,
@@ -26,7 +27,7 @@ class DependencyContainer:
         self._engine = sqlalchemy.create_engine(self.settings.database_url)
 
     def create_unit_of_work_factory(self) -> unitofwork.UnitOfWorkFactory:
-        return adapters.SQLAlchemyUnitOfWorkFactory(self._engine)
+        return nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWorkFactory(self._engine)
 
     def create_embedding_function(self) -> usecase.EmbeddingFunction:
         model = sentence_transformers.SentenceTransformer(self.settings.embedding_model_name)
