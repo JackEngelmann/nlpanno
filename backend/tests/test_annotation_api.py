@@ -4,18 +4,19 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from nlpanno import adapters, annotation, domain, sampling
+from nlpanno import adapters, domain, sampling
+from nlpanno.adapters.annotation_api import main
 
 _SAMPLES_ENDPOINT = "/api/samples"
-_TASK_CONFIG_ENDPOINT = "/api/taskConfig"
-_NEXT_SAMPLE_ENDPOINT = "/api/nextSample"
+_TASK_ENDPOINT = "/api/tasks"
+_NEXT_SAMPLE_ENDPOINT = "/api/samples/next"
 
 
 def test_get_task_config() -> None:
     """Test getting the task config."""
     task_config = domain.AnnotationTask(("class 1", "class 2"))
     client = create_client((), task_config)
-    response = client.get(_TASK_CONFIG_ENDPOINT)
+    response = client.get(_TASK_ENDPOINT)
     assert response.status_code == 200
     assert response.json() == {"textClasses": ["class 1", "class 2"]}
 
@@ -75,7 +76,7 @@ def create_client(
             unit_of_work.samples.create(sample)
         unit_of_work.commit()
 
-    app = annotation.create_app(
+    app = main.create_app(
         unit_of_work_factory,
         task_config,
         sampling.RandomSampler(),

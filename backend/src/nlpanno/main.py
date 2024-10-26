@@ -5,7 +5,8 @@ import logging
 import typer
 import uvicorn
 
-from nlpanno import annotation, config, container, datasets, domain, infrastructure
+from nlpanno import annotation, config, container, datasets, domain
+from nlpanno.application import unitofwork
 
 settings = config.ApplicationSettings()
 dependency_container = container.DependencyContainer(settings)
