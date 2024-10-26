@@ -99,21 +99,38 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
         persistence_sample = Sample.from_domain(sample)
         self._session.add(persistence_sample)
 
-    def find(self, query: usecases.SampleQuery = usecases.SampleQuery()) -> tuple[domain.Sample, ...]:
-        filters = []
-
-        if query.has_label is True:
-            filters.append(Sample.text_class.is_not(None))
-        elif query.has_label is False:
-            filters.append(Sample.text_class.is_(None))
-
-        if query.has_embedding is True:
-            filters.append(Sample.embedding.is_not(None))
-        elif query.has_embedding is False:
-            filters.append(Sample.embedding.is_(None))
-
-        persistence_samples = self._session.query(Sample).filter(*filters)
+    def find(self, query: usecases.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
+        select_statement = sqlalchemy.select(Sample)
+        select_statement = self._apply_filters(select_statement, query)
+        persistence_samples = self._session.scalars(select_statement).all()
         return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
+
+    def _apply_filters(
+        self, statement: sqlalchemy.sql.Select, query: usecases.SampleQuery | None
+    ) -> sqlalchemy.sql.Select:
+        if query is None:
+            return statement
+        statement = self._apply_filter_has_label(statement, query)
+        statement = self._apply_filter_has_embedding(statement, query)
+        return statement
+
+    def _apply_filter_has_label(
+        self, statement: sqlalchemy.sql.Select, query: usecases.SampleQuery
+    ) -> sqlalchemy.sql.Select:
+        if query.has_label is True:
+            return statement.where(Sample.text_class.is_not(None))
+        elif query.has_label is False:
+            return statement.where(Sample.text_class.is_(None))
+        return statement
+
+    def _apply_filter_has_embedding(
+        self, statement: sqlalchemy.sql.Select, query: usecases.SampleQuery
+    ) -> sqlalchemy.sql.Select:
+        if query.has_embedding is True:
+            return statement.where(Sample.embedding.is_not(None))
+        elif query.has_embedding is False:
+            return statement.where(Sample.embedding.is_(None))
+        return statement
 
 
 # TODO: add rollback.

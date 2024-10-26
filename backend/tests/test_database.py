@@ -2,9 +2,9 @@
 
 import pytest
 import sqlalchemy.orm
+import torch
 
 from nlpanno import database, domain, infrastructure, usecases
-import torch
 
 
 class TestSampleRepository:

@@ -2,8 +2,8 @@ import abc
 import collections
 import logging
 from collections.abc import Sequence
-from typing import Callable
 from dataclasses import dataclass
+from typing import Callable
 
 from nlpanno import domain, sampling
 
@@ -114,11 +114,11 @@ class EstimateSamplesUseCase:
     def __call__(self) -> None:
         """Estimate samples."""
         class_embeddings = self._calculate_class_embeddings()
-        unlabeled_samples = self._sample_repository.get_unlabeled()
-        for sample in unlabeled_samples:
-            if sample.embedding is None:
-                continue
+        query = SampleQuery(has_label=True, has_embedding=True)
+        samples = self._sample_repository.find(query)
+        for sample in samples:
             _LOGGER.debug(f"Estimating sample {sample.id}")
+            assert sample.embedding is not None
             class_estimates = self._calculate_class_estimates(sample.embedding, class_embeddings)
             sample.add_class_estimates(class_estimates)
             self._sample_repository.update(sample)
@@ -137,6 +137,8 @@ class EstimateSamplesUseCase:
 
         embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
         for sample in samples:
+            assert sample.embedding is not None
+            assert sample.text_class is not None
             embeddings_by_class[sample.text_class].append(sample.embedding)
 
         return {

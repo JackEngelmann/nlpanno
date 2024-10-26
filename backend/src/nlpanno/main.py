@@ -58,7 +58,7 @@ def _fill_db_with_test_data(session: infrastructure.Session) -> domain.Annotatio
         limit=100,
     )
 
-    is_empty = len(session.sample_repository.get_all()) == 0
+    is_empty = len(session.sample_repository.find()) == 0
     if is_empty:
         for sample in mtop_dataset.samples:
             session.sample_repository.create(sample)

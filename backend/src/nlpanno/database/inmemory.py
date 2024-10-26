@@ -26,19 +26,33 @@ class InMemorySampleRepository(usecases.SampleRepository):
     def create(self, sample: domain.Sample) -> None:
         self._samples.append(sample)
 
-    def find(self, query: usecases.SampleQuery = usecases.SampleQuery()) -> tuple[domain.Sample, ...]:
-        return tuple(sample for sample in self._samples if self._sample_matches_query(sample, query))
-    
+    def find(self, query: usecases.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
+        if query is None:
+            return tuple(self._samples)
+        return tuple(
+            sample for sample in self._samples if self._sample_matches_query(sample, query)
+        )
+
     def _sample_matches_query(self, sample: domain.Sample, query: usecases.SampleQuery) -> bool:
-        if query.has_label is True and sample.text_class is None:
-            return False
-        elif query.has_label is False and sample.text_class is not None:
-            return False
-        if query.has_embedding is True and sample.embedding is None:
-            return False
-        elif query.has_embedding is False and sample.embedding is not None:
-            return False
-        return True
+        return self._sample_matches_has_label_filter(
+            sample, query
+        ) and self._sample_matches_has_embedding_filter(sample, query)
+
+    def _sample_matches_has_label_filter(
+        self, sample: domain.Sample, query: usecases.SampleQuery
+    ) -> bool:
+        if query.has_label is None:
+            return True
+        sample_has_label = sample.text_class is not None
+        return query.has_label == sample_has_label
+
+    def _sample_matches_has_embedding_filter(
+        self, sample: domain.Sample, query: usecases.SampleQuery
+    ) -> bool:
+        if query.has_embedding is None:
+            return True
+        sample_has_embedding = sample.embedding is not None
+        return query.has_embedding == sample_has_embedding
 
 
 class InMemorySession(infrastructure.Session):
