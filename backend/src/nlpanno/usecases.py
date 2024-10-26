@@ -37,28 +37,8 @@ class SampleRepository(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_all(self) -> tuple[domain.Sample, ...]:
-        """Find all samples."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def update(self, sample: domain.Sample) -> None:
         """Update a sample."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_unlabeled(self) -> tuple[domain.Sample, ...]:
-        """Get all unlabeled samples."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_labeled(self) -> tuple[domain.Sample, ...]:
-        """Get all labeled samples."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def get_unembedded(self) -> tuple[domain.Sample, ...]:
-        """Get all unembedded samples."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -76,7 +56,7 @@ class GetNextSampleUseCase:
 
     def __call__(self) -> domain.Sample | None:
         """Get the next sample for annotation."""
-        unlabeled_samples = self._sample_repository.get_unlabeled()
+        unlabeled_samples = self._sample_repository.find(SampleQuery(has_label=False))
         sample_id = self._sampler(unlabeled_samples)
         if sample_id is None:
             return None
@@ -108,7 +88,7 @@ class EmbedAllSamplesUseCase:
 
     def __call__(self) -> bool:
         """Embed all samples."""
-        samples = self._sample_repository.get_unembedded()
+        samples = self._sample_repository.find(SampleQuery(has_embedding=False))
         if len(samples) == 0:
             return False
         embeddings = self._embedding_function(samples)
@@ -133,8 +113,7 @@ class EstimateSamplesUseCase:
 
     def __call__(self) -> None:
         """Estimate samples."""
-        labeled_samples = self._sample_repository.get_labeled()
-        class_embeddings = self._calculate_class_embeddings(labeled_samples)
+        class_embeddings = self._calculate_class_embeddings()
         unlabeled_samples = self._sample_repository.get_unlabeled()
         for sample in unlabeled_samples:
             if sample.embedding is None:
@@ -153,13 +132,11 @@ class EstimateSamplesUseCase:
             class_estimates.append(domain.ClassEstimate.create(text_class, similarity))
         return tuple(class_estimates)
 
-    def _calculate_class_embeddings(
-        self, labeled_samples: tuple[domain.Sample, ...]
-    ) -> dict[str, domain.Embedding]:
+    def _calculate_class_embeddings(self) -> dict[str, domain.Embedding]:
+        samples = self._sample_repository.find(SampleQuery(has_embedding=True, has_label=True))
+
         embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
-        for sample in labeled_samples:
-            if sample.embedding is None or sample.text_class is None:
-                continue
+        for sample in samples:
             embeddings_by_class[sample.text_class].append(sample.embedding)
 
         return {

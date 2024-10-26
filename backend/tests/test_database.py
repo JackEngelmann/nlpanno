@@ -33,33 +33,6 @@ class TestSampleRepository:
             assert found_sample == sample_to_find
 
     @staticmethod
-    def test_get_all(session_factory: infrastructure.SessionFactory) -> None:
-        """Test getting all samples."""
-        samples = (
-            domain.Sample(
-                domain.create_id(),
-                "text 1",
-                "class 1",
-            ),
-            domain.Sample(
-                domain.create_id(),
-                "text 2",
-                "class 1",
-            ),
-            domain.Sample(
-                domain.create_id(),
-                "text 3",
-                "class 2",
-            ),
-        )
-        with session_factory() as session:
-            sample_repository = session.sample_repository
-            for sample in samples:
-                sample_repository.create(sample)
-            session.commit()
-            assert len(sample_repository.get_all()) == len(samples)
-
-    @staticmethod
     def test_update(session_factory: infrastructure.SessionFactory) -> None:
         """Test updating a sample."""
         sample_to_update = domain.Sample(
@@ -79,19 +52,6 @@ class TestSampleRepository:
             session.commit()
             assert sample_repository.get_by_id(sample_to_update.id) == updated_sample
 
-    @staticmethod
-    def test_get_unlabeled(session_factory: infrastructure.SessionFactory) -> None:
-        """Test getting unlabeled samples."""
-        unlabeled_id = domain.create_id()
-        with session_factory() as session:
-            sample_repository = session.sample_repository
-            sample_repository.create(domain.Sample(domain.create_id(), "text 1", "class 1"))
-            sample_repository.create(domain.Sample(unlabeled_id, "text 2", None))
-            session.commit()
-            unlabeled_samples = sample_repository.get_unlabeled()
-            assert len(unlabeled_samples) == 1
-            assert unlabeled_samples[0].id == unlabeled_id
-    
     @staticmethod
     @pytest.mark.parametrize(
         "query, expected_sample_ids",

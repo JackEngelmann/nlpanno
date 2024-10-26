@@ -95,24 +95,7 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
         persistence_sample = Sample.from_domain(sample)
         self._session.merge(persistence_sample)
 
-    def get_unlabeled(self) -> tuple[domain.Sample, ...]:
-        # SQLAlchemy expects None to be compared with ==, not is.
-        persistence_samples = self._session.query(Sample).filter(Sample.text_class == None).all()  # noqa: E711
-        return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
-
-    def get_labeled(self) -> tuple[domain.Sample, ...]:
-        # SQLAlchemy expects None to be compared with ==, not is.
-        persistence_samples = self._session.query(Sample).filter(Sample.text_class != None).all()  # noqa: E711
-        return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
-
-    def get_unembedded(self) -> tuple[domain.Sample, ...]:
-        # SQLAlchemy expects None to be compared with ==, not is.
-        persistence_samples = self._session.query(Sample).filter(Sample.embedding == None).all()  # noqa: E711
-        return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
-
     def create(self, sample: domain.Sample) -> None:
-        _LOG.info("Creating sample")
-        _LOG.info(f"Sample: {sample}")
         persistence_sample = Sample.from_domain(sample)
         self._session.add(persistence_sample)
 
