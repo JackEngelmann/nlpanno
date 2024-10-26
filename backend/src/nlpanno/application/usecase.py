@@ -16,7 +16,7 @@ VectorSimilarityFunction = Callable[[model.Embedding, model.Embedding], float]
 
 
 def get_next_sample(
-    unit_of_work: unitofwork.UnitOfWork, sampler: sampling.Sampler
+    unit_of_work: unitofwork.UnitOfWork, sampler: sampling.Sampler, task_id: model.Id
 ) -> model.Sample | None:
     with unit_of_work:
         unlabeled_samples = unit_of_work.samples.find(repository.SampleQuery(has_label=False))
@@ -27,11 +27,16 @@ def get_next_sample(
 
 
 def annotate_sample(
-    unit_of_work: unitofwork.UnitOfWork, sample_id: model.Id, text_class: str | None
+    unit_of_work: unitofwork.UnitOfWork, sample_id: model.Id, text_class_id: model.Id | None
 ) -> model.Sample:
     with unit_of_work:
         sample = unit_of_work.samples.get_by_id(sample_id)
-        sample.annotate(text_class)
+        if text_class_id is None:
+            sample.remove_label()
+        else:
+            annotation_task = unit_of_work.annotation_tasks.get_by_id(sample.annotation_task_id)
+            text_class = annotation_task.get_text_class_by_id(text_class_id)
+            sample.annotate(text_class)
         unit_of_work.samples.update(sample)
         unit_of_work.commit()
         return sample
@@ -80,7 +85,8 @@ def _calculate_class_estimates(
     class_estimates = []
     for text_class, class_embedding in class_embeddings.items():
         similarity = vector_similarity_function(sample_embedding, class_embedding)
-        class_estimates.append(model.ClassEstimate.create(text_class, similarity))
+        class_estimate = model.ClassEstimate.create(text_class_id=text_class, confidence=similarity)
+        class_estimates.append(class_estimate)
     return tuple(class_estimates)
 
 
@@ -94,7 +100,7 @@ def _calculate_class_embeddings(
     for sample in samples:
         assert sample.embedding is not None
         assert sample.text_class is not None
-        embeddings_by_class[sample.text_class].append(sample.embedding)
+        embeddings_by_class[sample.text_class.id].append(sample.embedding)
 
     return {
         text_class: embedding_aggregation_function(embeddings)

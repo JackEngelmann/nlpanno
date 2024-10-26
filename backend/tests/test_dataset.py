@@ -28,7 +28,8 @@ class TestMtop:
         assert dataset.samples[0].text == _MTOP_TEXT
         # Ground truth should be None, so that the user can annotate it.
         assert dataset.samples[0].text_class is None
-        assert dataset.task_config.text_classes == (_MTOP_TEXT_CLASS,)
+        class_names = tuple(text_class.name for text_class in dataset.task_config.text_classes)
+        assert class_names == (_MTOP_TEXT_CLASS,)
 
     def test_initiation_with_classname(self, input_dir: pathlib.Path) -> None:
         """Test initiation of the MTOP dataset with class name."""

@@ -6,30 +6,50 @@ import pytest
 
 import nlpanno.adapters.persistence.inmemory
 from nlpanno import sampling
-from nlpanno.adapters.annotation_api import main
+from nlpanno.adapters import annotation_api
 from nlpanno.domain import model
 
-_SAMPLES_ENDPOINT = "/api/samples"
-_TASK_ENDPOINT = "/api/tasks"
-_NEXT_SAMPLE_ENDPOINT = "/api/samples/next"
+_GET_TASK_ENDPOINT = "/api/tasks/{task_id}"
+_PATCH_SAMPLE_ENDPOINT = "/api/samples/{sample_id}"
+_NEXT_SAMPLE_ENDPOINT = "/api/tasks/{task_id}/nextSample"
+
+_ANNOTATION_TASK_ID = model.create_id()
+_TEXT_CLASS_1 = model.TextClass("c1", "class 1", _ANNOTATION_TASK_ID)
+_TEXT_CLASS_2 = model.TextClass("c2", "class 2", _ANNOTATION_TASK_ID)
+_ANNOTATION_TASK = model.AnnotationTask(_ANNOTATION_TASK_ID, (_TEXT_CLASS_1, _TEXT_CLASS_2))
 
 
-def test_get_task_config() -> None:
+def test_get_task() -> None:
     """Test getting the task config."""
-    task_config = model.AnnotationTask(("class 1", "class 2"))
-    client = create_client((), task_config)
-    response = client.get(_TASK_ENDPOINT)
+    annotation_task = model.AnnotationTask(model.create_id(), (_TEXT_CLASS_1, _TEXT_CLASS_2))
+    expected_response = {
+        "textClasses": [
+            {"id": _TEXT_CLASS_1.id, "name": _TEXT_CLASS_1.name},
+            {"id": _TEXT_CLASS_2.id, "name": _TEXT_CLASS_2.name},
+        ]
+    }
+    client = create_client((), annotation_task)
+    endpoint = _GET_TASK_ENDPOINT.format(task_id=annotation_task.id)
+    response = client.get(endpoint)
     assert response.status_code == 200
-    assert response.json() == {"textClasses": ["class 1", "class 2"]}
+    assert response.json() == expected_response
 
 
 def test_get_next_sample() -> None:
     """Test getting the next sample."""
     sample_id = model.create_id()
-    sample = model.Sample(sample_id, "text 1", None)
-    client = create_client((sample,))
-    response = client.get(_NEXT_SAMPLE_ENDPOINT)
+    annotation_task_id = model.create_id()
+    annotation_task = model.AnnotationTask(annotation_task_id, (_TEXT_CLASS_1, _TEXT_CLASS_2))
+    sample = model.Sample(
+        id=sample_id,
+        annotation_task_id=annotation_task_id,
+        text="text",
+    )
+    client = create_client((sample,), annotation_task)
+    endpoint = _NEXT_SAMPLE_ENDPOINT.format(task_id=annotation_task_id)
+    response = client.get(endpoint)
     assert response.status_code == 200
+    assert response.json() is not None
     assert response.json()["id"] == sample_id
 
 
@@ -38,13 +58,13 @@ def test_get_next_sample() -> None:
     [
         (
             {
-                "textClass": "updated class",
+                "textClassId": _TEXT_CLASS_2.id,
             },
             {
                 "id": "id",
                 "text": "text",
-                "textClass": "updated class",
-                "textClassPredictions": [],
+                "textClass": {"id": _TEXT_CLASS_2.id, "name": _TEXT_CLASS_2.name},
+                "textClassPredictions": [0.0, 0.0],
             },
         ),
     ],
@@ -56,11 +76,13 @@ def test_patch_sample(
     """Test the patching (partial update) a sample."""
     sample = model.Sample(
         "id",
+        _ANNOTATION_TASK.id,
         "text",
-        "class",
+        _TEXT_CLASS_1,
     )
-    client = create_client((sample,))
-    updated = client.patch(f"{_SAMPLES_ENDPOINT}/{sample.id}", json=input_data)
+    client = create_client((sample,), _ANNOTATION_TASK)
+    endpoint = _PATCH_SAMPLE_ENDPOINT.format(sample_id=sample.id)
+    updated = client.patch(endpoint, json=input_data)
     assert updated.status_code == 200
     assert updated.json() == expected_response
 
@@ -70,17 +92,17 @@ def create_client(
 ) -> fastapi.testclient.TestClient:
     """Create a client for testing."""
     if task_config is None:
-        task_config = model.AnnotationTask(())
+        task_config = model.AnnotationTask(model.create_id(), ())
 
     unit_of_work_factory = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWorkFactory()
     with unit_of_work_factory() as unit_of_work:
         for sample in samples:
             unit_of_work.samples.create(sample)
+        unit_of_work.annotation_tasks.create(task_config)
         unit_of_work.commit()
 
-    app = main.create_app(
+    app = annotation_api.create_app(
         unit_of_work_factory,
-        task_config,
         sampling.RandomSampler(),
         include_static_files=False,
     )

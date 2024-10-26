@@ -10,6 +10,7 @@ def test_random_sampler() -> None:
     id_ = model.create_id()
     sample = model.Sample(
         id_,
+        "task_id",
         "text 1",
         None,
     )

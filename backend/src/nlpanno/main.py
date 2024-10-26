@@ -7,7 +7,6 @@ import nlpanno.logging
 from nlpanno import config, container, datasets
 from nlpanno.adapters import annotation_api
 from nlpanno.application import unitofwork
-from nlpanno.domain import model
 
 nlpanno.logging.configure_logging()
 
@@ -25,13 +24,12 @@ def start_annotation() -> None:
     unit_of_work_factory = dependency_container.create_unit_of_work_factory()
     with unit_of_work_factory() as unit_of_work:
         unit_of_work.create_tables()
-        task_config = _fill_db_with_test_data(unit_of_work)
+        _fill_db_with_test_data(unit_of_work)
         unit_of_work.commit()
 
     global server_app
     server_app = annotation_api.create_app(
         unit_of_work_factory,
-        task_config,
         sampler,
         include_static_files=False,
     )
@@ -52,7 +50,7 @@ def start_estimation_loop() -> None:
     estimation_processor.start()
 
 
-def _fill_db_with_test_data(unit_of_work: unitofwork.UnitOfWork) -> model.AnnotationTask:
+def _fill_db_with_test_data(unit_of_work: unitofwork.UnitOfWork) -> None:
     mtop_dataset = datasets.MTOP(
         "/app/data",
         add_class_to_text=True,
@@ -63,5 +61,4 @@ def _fill_db_with_test_data(unit_of_work: unitofwork.UnitOfWork) -> model.Annota
     if is_empty:
         for sample in mtop_dataset.samples:
             unit_of_work.samples.create(sample)
-
-    return mtop_dataset.task_config
+        unit_of_work.annotation_tasks.create(mtop_dataset.task_config)

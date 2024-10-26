@@ -26,6 +26,11 @@ class UnitOfWork(abc.ABC):
     def samples(self) -> repository.SampleRepository:
         raise NotImplementedError()
 
+    @property
+    @abc.abstractmethod
+    def annotation_tasks(self) -> repository.AnnotationTaskRepository:
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def commit(self) -> None:
         raise NotImplementedError()

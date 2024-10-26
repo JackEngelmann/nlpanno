@@ -11,12 +11,19 @@ class BaseSchema(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(frozen=True)
 
 
+class TextClassReadSchema(BaseSchema):
+    """Data transfer object for a text class."""
+
+    id: str
+    name: str
+
+
 class SampleReadSchema(BaseSchema):
     """Data transfer object for a sample."""
 
     id: str
     text: str
-    text_class: Optional[str] = pydantic.Field(serialization_alias="textClass")
+    text_class: Optional[TextClassReadSchema] = pydantic.Field(serialization_alias="textClass")
     text_class_predictions: Optional[tuple[float, ...]] = pydantic.Field(
         serialization_alias="textClassPredictions"
     )
@@ -25,11 +32,12 @@ class SampleReadSchema(BaseSchema):
 class SamplePatchSchema(BaseSchema):
     """Data transfer object for a sample patch."""
 
-    text: Optional[str] = None
-    text_class: Optional[str] = pydantic.Field(validation_alias="textClass")
+    text_class_id: Optional[str] = pydantic.Field(validation_alias="textClassId")
 
 
 class TaskReadSchema(BaseSchema):
     """Data transfer object for a task config."""
 
-    text_classes: tuple[str, ...] = pydantic.Field(serialization_alias="textClasses")
+    text_classes: tuple[TextClassReadSchema, ...] = pydantic.Field(
+        serialization_alias="textClasses"
+    )

@@ -39,18 +39,25 @@ class MTOP(Dataset):
 
     def _read_data(self) -> tuple[tuple[model.Sample, ...], model.AnnotationTask]:
         """Load data from disk."""
+        annotation_task = model.AnnotationTask(model.create_id(), ())
         samples: list[model.Sample] = []
         text_classes: set[str] = set()
         for line in self._read_lines():
             _LOG.info(f"Line: {line}")
             if self._limit_hit(samples):
                 break
-            sample, text_class = self._parse_line(line)
+            text, text_class = self._parse_line(line)
+            sample = model.Sample(
+                id=model.create_id(),
+                annotation_task_id=annotation_task.id,
+                text=text,
+            )
             samples.append(sample)
             text_classes.add(text_class)
         sorted_text_classes = tuple(sorted(text_classes))
-        task_config = model.AnnotationTask(sorted_text_classes)
-        return tuple(samples), task_config
+        for text_class in sorted_text_classes:
+            annotation_task.create_text_class(text_class)
+        return tuple(samples), annotation_task
 
     def _limit_hit(self, samples: list[model.Sample]) -> bool:
         """Check if the limit has been hit."""
@@ -65,10 +72,10 @@ class MTOP(Dataset):
             with open(data_file_path, encoding="utf-8") as input_file:
                 yield from input_file
 
-    def _parse_line(self, line: str) -> tuple[model.Sample, str]:
+    def _parse_line(self, line: str) -> tuple[str, str]:
         """Parse a line from the data file."""
         _, text_class, _, text, *_ = line.split("\t")
         text_class = text_class[3:].replace("_", " ").lower()
         if self._add_class_to_text:
             text += f" ({text_class})"
-        return model.Sample(model.create_id(), text, None), text_class
+        return text, text_class
