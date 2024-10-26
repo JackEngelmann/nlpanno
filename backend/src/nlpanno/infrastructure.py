@@ -2,7 +2,7 @@ import abc
 from types import TracebackType
 from typing import Self
 
-from nlpanno import usecases
+from nlpanno import domain
 
 
 class Session(abc.ABC):
@@ -23,7 +23,7 @@ class Session(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def sample_repository(self) -> usecases.SampleRepository:
+    def sample_repository(self) -> domain.SampleRepository:
         raise NotImplementedError()
 
     @abc.abstractmethod

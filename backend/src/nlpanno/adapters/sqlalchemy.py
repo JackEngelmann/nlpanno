@@ -7,7 +7,8 @@ import sqlalchemy
 import torch
 from sqlalchemy import orm
 
-from nlpanno import domain, infrastructure, usecases
+from nlpanno import adapters, domain, infrastructure
+from nlpanno.application import usecase
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -75,7 +76,7 @@ class ClassEstimate(Base):
         )
 
 
-class SQLAlchemySampleRepository(usecases.SampleRepository):
+class SQLAlchemySampleRepository(domain.SampleRepository):
     """Sample repository using SQLAlchemy."""
 
     def __init__(self, session: orm.Session) -> None:
@@ -99,14 +100,14 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
         persistence_sample = Sample.from_domain(sample)
         self._session.add(persistence_sample)
 
-    def find(self, query: usecases.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
+    def find(self, query: domain.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
         select_statement = sqlalchemy.select(Sample)
         select_statement = self._apply_filters(select_statement, query)
         persistence_samples = self._session.scalars(select_statement).all()
         return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
 
     def _apply_filters(
-        self, statement: sqlalchemy.sql.Select, query: usecases.SampleQuery | None
+        self, statement: sqlalchemy.sql.Select, query: domain.SampleQuery | None
     ) -> sqlalchemy.sql.Select:
         if query is None:
             return statement
@@ -115,7 +116,7 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
         return statement
 
     def _apply_filter_has_label(
-        self, statement: sqlalchemy.sql.Select, query: usecases.SampleQuery
+        self, statement: sqlalchemy.sql.Select, query: domain.SampleQuery
     ) -> sqlalchemy.sql.Select:
         if query.has_label is True:
             return statement.where(Sample.text_class.is_not(None))
@@ -124,7 +125,7 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
         return statement
 
     def _apply_filter_has_embedding(
-        self, statement: sqlalchemy.sql.Select, query: usecases.SampleQuery
+        self, statement: sqlalchemy.sql.Select, query: domain.SampleQuery
     ) -> sqlalchemy.sql.Select:
         if query.has_embedding is True:
             return statement.where(Sample.embedding.is_not(None))

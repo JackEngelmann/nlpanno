@@ -4,7 +4,8 @@ import pytest
 import sqlalchemy.orm
 import torch
 
-from nlpanno import database, domain, infrastructure, usecases
+from nlpanno import adapters, domain, infrastructure
+from nlpanno.application import usecase
 
 
 class TestSampleRepository:
@@ -56,16 +57,16 @@ class TestSampleRepository:
     @pytest.mark.parametrize(
         "query, expected_sample_ids",
         [
-            (usecases.SampleQuery(), ("1", "2", "3", "4")),
-            (usecases.SampleQuery(has_label=True), ("1", "4")),
-            (usecases.SampleQuery(has_label=False), ("2", "3")),
-            (usecases.SampleQuery(has_embedding=True), ("3", "4")),
-            (usecases.SampleQuery(has_embedding=False), ("1", "2")),
+            (domain.SampleQuery(), ("1", "2", "3", "4")),
+            (domain.SampleQuery(has_label=True), ("1", "4")),
+            (domain.SampleQuery(has_label=False), ("2", "3")),
+            (domain.SampleQuery(has_embedding=True), ("3", "4")),
+            (domain.SampleQuery(has_embedding=False), ("1", "2")),
         ],
     )
     def test_find(
         session_factory: infrastructure.SessionFactory,
-        query: usecases.SampleQuery,
+        query: domain.SampleQuery,
         expected_sample_ids: tuple[domain.Id, ...],
     ) -> None:
         """Test finding samples by query."""
@@ -90,10 +91,10 @@ class TestSampleRepository:
 def session_factory(request: pytest.FixtureRequest) -> infrastructure.SessionFactory:
     """Session factory fixture."""
     if request.param == "inmemory":
-        return database.InMemorySessionFactory()
+        return adapters.InMemorySessionFactory()
     if request.param == "sqlalchemy":
         engine = sqlalchemy.create_engine("sqlite://")
-        session_factory = database.SQLAlchemySessionFactory(engine)
+        session_factory = adapters.SQLAlchemySessionFactory(engine)
         with session_factory() as session:
             session.create_tables()
             session.commit()

@@ -3,5 +3,8 @@ from .model import (
     ClassEstimate,
     create_id,
     AnnotationTask,
+    Id,
+    create_id,
+    Embedding,
 )
 from .repository import SampleRepository, SampleQuery

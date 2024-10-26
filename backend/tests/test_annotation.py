@@ -4,7 +4,7 @@ import fastapi
 import fastapi.testclient
 import pytest
 
-from nlpanno import annotation, database, domain, sampling
+from nlpanno import adapters, annotation, domain, sampling
 
 _SAMPLES_ENDPOINT = "/api/samples"
 _TASK_CONFIG_ENDPOINT = "/api/taskConfig"
@@ -69,7 +69,7 @@ def create_client(
     if task_config is None:
         task_config = domain.AnnotationTask(())
 
-    session_factory = database.InMemorySessionFactory()
+    session_factory = adapters.InMemorySessionFactory()
     with session_factory() as session:
         for sample in samples:
             session.sample_repository.create(sample)

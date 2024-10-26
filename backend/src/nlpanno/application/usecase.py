@@ -48,7 +48,7 @@ class EmbedAllSamplesUseCase:
     """Usecase for embedding all samples."""
 
     def __init__(
-        self, sample_repository: SampleRepository, embedding_function: EmbeddingFunction
+        self, sample_repository: domain.SampleRepository, embedding_function: EmbeddingFunction
     ) -> None:
         self._sample_repository = sample_repository
         self._embedding_function = embedding_function
@@ -70,7 +70,7 @@ class EstimateSamplesUseCase:
 
     def __init__(
         self,
-        sample_repository: SampleRepository,
+        sample_repository: domain.SampleRepository,
         embedding_aggregation_function: EmbeddingAggregationFunction,
         vector_similarity_function: VectorSimilarityFunction,
     ) -> None:
@@ -81,7 +81,7 @@ class EstimateSamplesUseCase:
     def __call__(self) -> None:
         """Estimate samples."""
         class_embeddings = self._calculate_class_embeddings()
-        query = SampleQuery(has_label=True, has_embedding=True)
+        query = domain.SampleQuery(has_label=True, has_embedding=True)
         samples = self._sample_repository.find(query)
         for sample in samples:
             _LOGGER.debug(f"Estimating sample {sample.id}")
@@ -100,7 +100,7 @@ class EstimateSamplesUseCase:
         return tuple(class_estimates)
 
     def _calculate_class_embeddings(self) -> dict[str, domain.Embedding]:
-        samples = self._sample_repository.find(SampleQuery(has_embedding=True, has_label=True))
+        samples = self._sample_repository.find(domain.SampleQuery(has_embedding=True, has_label=True))
 
         embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
         for sample in samples:

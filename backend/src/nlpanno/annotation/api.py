@@ -4,7 +4,7 @@ import fastapi
 import fastapi.staticfiles
 import fastapi.templating
 
-from nlpanno import usecases
+from nlpanno.application import usecase
 from nlpanno.annotation import requestcontext, transferobject, types
 
 router = fastapi.APIRouter(prefix="/api")
@@ -24,7 +24,7 @@ def get_next_sample(
 ) -> transferobject.SampleDTO | None:
     """Get the next sample (e.g. for annotation)."""
     with request_context.session_factory() as session:
-        use_case = usecases.GetNextSampleUseCase(session.sample_repository, request_context.sampler)
+        use_case = usecase.GetNextSampleUseCase(session.sample_repository, request_context.sampler)
         sample = use_case()
     if sample is None:
         return None
@@ -48,7 +48,7 @@ def patch_sample(
 ) -> transferobject.SampleDTO:
     """Patch (partial update) a sample."""
     with request_context.session_factory() as session:
-        use_case = usecases.AnnotateSampleUseCase(session.sample_repository)
+        use_case = usecase.AnnotateSampleUseCase(session.sample_repository)
         sample = use_case(sample_id, sample_patch.text_class)
         session.commit()
     return transferobject.SampleDTO.from_domain_object(sample, ())
