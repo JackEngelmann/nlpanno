@@ -4,3 +4,4 @@ from .model import (
     create_id,
     AnnotationTask,
 )
+from .repository import SampleRepository, SampleQuery

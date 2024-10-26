@@ -1,10 +1,10 @@
 from types import TracebackType
 from typing import Self
 
-from nlpanno import domain, infrastructure, usecases
+from nlpanno import domain, infrastructure
 
 
-class InMemorySampleRepository(usecases.SampleRepository):
+class InMemorySampleRepository(domain.SampleRepository):
     """Sample repository using an in-memory list."""
 
     def __init__(self) -> None:
@@ -26,20 +26,20 @@ class InMemorySampleRepository(usecases.SampleRepository):
     def create(self, sample: domain.Sample) -> None:
         self._samples.append(sample)
 
-    def find(self, query: usecases.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
+    def find(self, query: domain.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
         if query is None:
             return tuple(self._samples)
         return tuple(
             sample for sample in self._samples if self._sample_matches_query(sample, query)
         )
 
-    def _sample_matches_query(self, sample: domain.Sample, query: usecases.SampleQuery) -> bool:
+    def _sample_matches_query(self, sample: domain.Sample, query: domain.SampleQuery) -> bool:
         return self._sample_matches_has_label_filter(
             sample, query
         ) and self._sample_matches_has_embedding_filter(sample, query)
 
     def _sample_matches_has_label_filter(
-        self, sample: domain.Sample, query: usecases.SampleQuery
+        self, sample: domain.Sample, query: domain.SampleQuery
     ) -> bool:
         if query.has_label is None:
             return True
@@ -47,7 +47,7 @@ class InMemorySampleRepository(usecases.SampleRepository):
         return query.has_label == sample_has_label
 
     def _sample_matches_has_embedding_filter(
-        self, sample: domain.Sample, query: usecases.SampleQuery
+        self, sample: domain.Sample, query: domain.SampleQuery
     ) -> bool:
         if query.has_embedding is None:
             return True

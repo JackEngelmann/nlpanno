@@ -1,9 +1,8 @@
-import abc
 import collections
 import logging
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import Callable
+from nlpanno import domain
 
 from nlpanno import domain, sampling
 
@@ -15,48 +14,16 @@ EmbeddingAggregationFunction = Callable[[Sequence[domain.Embedding]], domain.Emb
 VectorSimilarityFunction = Callable[[domain.Embedding, domain.Embedding], float]
 
 
-@dataclass
-class SampleQuery:
-    """Query for finding samples."""
-
-    has_label: bool | None = None
-    has_embedding: bool | None = None
-
-
-class SampleRepository(abc.ABC):
-    """Base class for all sample repositories."""
-
-    @abc.abstractmethod
-    def get_by_id(self, id_: domain.Id) -> domain.Sample:
-        """Get a sample by the unique identifier."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def find(self, query: SampleQuery | None = None) -> tuple[domain.Sample, ...]:
-        """Find samples by the given query."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def update(self, sample: domain.Sample) -> None:
-        """Update a sample."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def create(self, sample: domain.Sample) -> None:
-        """Create a sample."""
-        raise NotImplementedError()
-
-
 class GetNextSampleUseCase:
     """Usecase for getting the next sample for annotation."""
 
-    def __init__(self, sample_repository: SampleRepository, sampler: sampling.Sampler) -> None:
+    def __init__(self, sample_repository: domain.SampleRepository, sampler: sampling.Sampler) -> None:
         self._sample_repository = sample_repository
         self._sampler = sampler
 
     def __call__(self) -> domain.Sample | None:
         """Get the next sample for annotation."""
-        unlabeled_samples = self._sample_repository.find(SampleQuery(has_label=False))
+        unlabeled_samples = self._sample_repository.find(domain.SampleQuery(has_label=False))
         sample_id = self._sampler(unlabeled_samples)
         if sample_id is None:
             return None
@@ -66,7 +33,7 @@ class GetNextSampleUseCase:
 class AnnotateSampleUseCase:
     """Usecase for annotating a sample."""
 
-    def __init__(self, sample_repository: SampleRepository) -> None:
+    def __init__(self, sample_repository: domain.SampleRepository) -> None:
         self._sample_repository = sample_repository
 
     def __call__(self, sample_id: domain.Id, text_class: str | None) -> domain.Sample:
