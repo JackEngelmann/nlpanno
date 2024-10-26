@@ -3,14 +3,14 @@
 import abc
 import random
 
-from nlpanno import domain
+from nlpanno.domain import model
 
 
 class Sampler(abc.ABC):
     """Base class for all samplers."""
 
     @abc.abstractmethod
-    def __call__(self, samples: tuple[domain.Sample, ...]) -> domain.Id | None:
+    def __call__(self, samples: tuple[model.Sample, ...]) -> model.Id | None:
         """Pick a sample."""
         raise NotImplementedError()
 
@@ -18,7 +18,7 @@ class Sampler(abc.ABC):
 class RandomSampler(Sampler):
     """Sampler picking a random sample."""
 
-    def __call__(self, samples: tuple[domain.Sample, ...]) -> domain.Id | None:
+    def __call__(self, samples: tuple[model.Sample, ...]) -> model.Id | None:
         """Pick a random sample."""
         if len(samples) == 0:
             return None

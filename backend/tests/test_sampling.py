@@ -1,13 +1,14 @@
 """Test suit for sampling."""
 
-from nlpanno import domain, sampling
+from nlpanno import sampling
+from nlpanno.domain import model
 
 
 def test_random_sampler() -> None:
     """Test sampling with the random sampler."""
     random_sampler = sampling.RandomSampler()
-    id_ = domain.create_id()
-    sample = domain.Sample(
+    id_ = model.create_id()
+    sample = model.Sample(
         id_,
         "text 1",
         None,

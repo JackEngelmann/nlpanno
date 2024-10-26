@@ -6,8 +6,11 @@ import torch
 
 import nlpanno.adapters.persistence.inmemory
 import nlpanno.adapters.persistence.sqlalchemy
-from nlpanno import domain
 from nlpanno.application import unitofwork
+from nlpanno.domain import model, repository
+
+_TEXT_CLASS_1 = "class 1"
+_TEXT_CLASS_2 = "class 2"
 
 
 class TestSampleRepository:
@@ -16,15 +19,15 @@ class TestSampleRepository:
     @staticmethod
     def test_get_by_id(unit_of_work: unitofwork.UnitOfWork) -> None:
         """Test getting a sample by id."""
-        sample_to_find = domain.Sample(
-            domain.create_id(),
+        sample_to_find = model.Sample(
+            model.create_id(),
             "text 1",
-            "class 1",
+            _TEXT_CLASS_1,
         )
-        other_sample = domain.Sample(
-            domain.create_id(),
+        other_sample = model.Sample(
+            model.create_id(),
             "text 2",
-            "class 2",
+            _TEXT_CLASS_2,
         )
         with unit_of_work:
             unit_of_work.samples.create(sample_to_find)
@@ -37,17 +40,17 @@ class TestSampleRepository:
     @staticmethod
     def test_update(unit_of_work: unitofwork.UnitOfWork) -> None:
         """Test updating a sample."""
-        sample_to_update = domain.Sample(
-            domain.create_id(),
+        sample_to_update = model.Sample(
+            model.create_id(),
             "text 1",
-            "class 1",
+            _TEXT_CLASS_1,
         )
         with unit_of_work:
             unit_of_work.samples.create(sample_to_update)
-            updated_sample = domain.Sample(
+            updated_sample = model.Sample(
                 sample_to_update.id,
                 "updated text",
-                "class 2",
+                _TEXT_CLASS_2,
             )
             unit_of_work.samples.update(updated_sample)
             unit_of_work.commit()
@@ -59,24 +62,24 @@ class TestSampleRepository:
     @pytest.mark.parametrize(
         "query, expected_sample_ids",
         [
-            (domain.SampleQuery(), ("1", "2", "3", "4")),
-            (domain.SampleQuery(has_label=True), ("1", "4")),
-            (domain.SampleQuery(has_label=False), ("2", "3")),
-            (domain.SampleQuery(has_embedding=True), ("3", "4")),
-            (domain.SampleQuery(has_embedding=False), ("1", "2")),
+            (repository.SampleQuery(), ("1", "2", "3", "4")),
+            (repository.SampleQuery(has_label=True), ("1", "4")),
+            (repository.SampleQuery(has_label=False), ("2", "3")),
+            (repository.SampleQuery(has_embedding=True), ("3", "4")),
+            (repository.SampleQuery(has_embedding=False), ("1", "2")),
         ],
     )
     def test_find(
         unit_of_work: unitofwork.UnitOfWork,
-        query: domain.SampleQuery,
-        expected_sample_ids: tuple[domain.Id, ...],
+        query: repository.SampleQuery,
+        expected_sample_ids: tuple[model.Id, ...],
     ) -> None:
         """Test finding samples by query."""
         samples = (
-            domain.Sample("1", "text 1", "class"),
-            domain.Sample("2", "text 2", None),
-            domain.Sample("3", "text 3", None, torch.rand(10)),
-            domain.Sample("4", "text 4", "class", torch.rand(10)),
+            model.Sample("1", "text 1", _TEXT_CLASS_1),
+            model.Sample("2", "text 2", None),
+            model.Sample("3", "text 3", None, torch.rand(10)),
+            model.Sample("4", "text 4", _TEXT_CLASS_2, torch.rand(10)),
         )
         with unit_of_work:
             for sample in samples:

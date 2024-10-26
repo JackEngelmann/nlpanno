@@ -4,9 +4,10 @@ import typer
 import uvicorn
 
 import nlpanno.logging
-from nlpanno import config, container, datasets, domain
+from nlpanno import config, container, datasets
 from nlpanno.adapters import annotation_api
 from nlpanno.application import unitofwork
+from nlpanno.domain import model
 
 nlpanno.logging.configure_logging()
 
@@ -51,7 +52,7 @@ def start_estimation_loop() -> None:
     estimation_processor.start()
 
 
-def _fill_db_with_test_data(unit_of_work: unitofwork.UnitOfWork) -> domain.AnnotationTask:
+def _fill_db_with_test_data(unit_of_work: unitofwork.UnitOfWork) -> model.AnnotationTask:
     mtop_dataset = datasets.MTOP(
         "/app/data",
         add_class_to_text=True,

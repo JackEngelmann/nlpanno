@@ -1,10 +1,10 @@
-from nlpanno import domain
+from nlpanno.domain import model
 
 from . import schema
 
 
 def map_sample_to_read_schema(
-    sample: domain.Sample, task: domain.AnnotationTask
+    sample: model.Sample, task: model.AnnotationTask
 ) -> schema.SampleReadSchema:
     """Map a sample to a read schema."""
     # TODO: include task in domain object.
@@ -23,7 +23,7 @@ def map_sample_to_read_schema(
 
 
 def map_task_to_read_schema(
-    task_config: domain.AnnotationTask,
+    task_config: model.AnnotationTask,
 ) -> schema.TaskReadSchema:
     """Map a task to a read schema."""
     return schema.TaskReadSchema(

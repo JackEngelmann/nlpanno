@@ -2,15 +2,16 @@
 
 import fastapi
 
-from nlpanno import domain, sampling
+from nlpanno import sampling
 from nlpanno.application import unitofwork
+from nlpanno.domain import model
 
 from . import controller_sample, controller_static, controller_task, middlewares, requestcontext
 
 
 def create_app(
     unit_of_work_factory: unitofwork.UnitOfWorkFactory,
-    task_config: domain.AnnotationTask,
+    task_config: model.AnnotationTask,
     sampler: sampling.Sampler,
     include_static_files: bool = True,
 ) -> fastapi.FastAPI:

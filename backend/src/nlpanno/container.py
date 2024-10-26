@@ -9,10 +9,10 @@ import nlpanno.adapters.persistence.sqlalchemy
 from nlpanno import (
     adapters,
     config,
-    domain,
     sampling,
 )
 from nlpanno.application import unitofwork, usecase
+from nlpanno.domain import model
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -30,19 +30,19 @@ class DependencyContainer:
         return nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWorkFactory(self._engine)
 
     def create_embedding_function(self) -> usecase.EmbeddingFunction:
-        model = sentence_transformers.SentenceTransformer(self.settings.embedding_model_name)
+        transformer = sentence_transformers.SentenceTransformer(self.settings.embedding_model_name)
         _LOG.info("finished loading embedding model")
 
-        def embedding_function(samples: Sequence[domain.Sample]) -> Sequence[domain.Embedding]:
+        def embedding_function(samples: Sequence[model.Sample]) -> Sequence[model.Embedding]:
             texts = list(sample.text for sample in samples)
-            return model.encode(texts, convert_to_tensor=True)  # type: ignore
+            return transformer.encode(texts, convert_to_tensor=True)  # type: ignore
 
         return embedding_function
 
     def create_embedding_aggregation_function(self) -> usecase.EmbeddingAggregationFunction:
         def embedding_aggregation_function(
-            embeddings: Sequence[domain.Embedding],
-        ) -> domain.Embedding:
+            embeddings: Sequence[model.Embedding],
+        ) -> model.Embedding:
             stacked = torch.stack(list(embeddings), dim=0)
             return torch.mean(stacked, dim=0)
 
@@ -50,7 +50,7 @@ class DependencyContainer:
 
     def create_vector_similarity_function(self) -> usecase.VectorSimilarityFunction:
         def vector_similarity_function(
-            sample_embedding: domain.Embedding, class_embedding: domain.Embedding
+            sample_embedding: model.Embedding, class_embedding: model.Embedding
         ) -> float:
             return sentence_transformers.util.pytorch_cos_sim(
                 class_embedding, sample_embedding

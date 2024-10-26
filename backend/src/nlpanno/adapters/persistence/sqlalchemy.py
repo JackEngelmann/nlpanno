@@ -7,8 +7,8 @@ import sqlalchemy
 import torch
 from sqlalchemy import orm
 
-from nlpanno import domain
 from nlpanno.application import unitofwork
+from nlpanno.domain import model, repository
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -28,9 +28,9 @@ class Sample(Base):
     embedding: orm.Mapped[Optional[str]]
     estimates: orm.Mapped[list["ClassEstimate"]] = orm.relationship()
 
-    def to_domain(self) -> domain.Sample:
+    def to_domain(self) -> model.Sample:
         embedding = None if self.embedding is None else torch.tensor(json.loads(self.embedding))
-        return domain.Sample(
+        return model.Sample(
             id=self.id,
             text=self.text,
             text_class=self.text_class,
@@ -39,7 +39,7 @@ class Sample(Base):
         )
 
     @classmethod
-    def from_domain(cls, sample: domain.Sample) -> Self:
+    def from_domain(cls, sample: model.Sample) -> Self:
         embedding = None if sample.embedding is None else json.dumps(sample.embedding.tolist())
         return cls(
             id=sample.id,
@@ -60,15 +60,15 @@ class ClassEstimate(Base):
     confidence: orm.Mapped[float]
     sample_id: orm.Mapped[str] = orm.mapped_column(sqlalchemy.ForeignKey("samples.id"))
 
-    def to_domain(self) -> domain.ClassEstimate:
-        return domain.ClassEstimate(
+    def to_domain(self) -> model.ClassEstimate:
+        return model.ClassEstimate(
             id=self.id,
             text_class=self.text_class,
             confidence=self.confidence,
         )
 
     @classmethod
-    def from_domain(cls, estimate: domain.ClassEstimate) -> Self:
+    def from_domain(cls, estimate: model.ClassEstimate) -> Self:
         return cls(
             id=estimate.id,
             text_class=estimate.text_class,
@@ -76,38 +76,38 @@ class ClassEstimate(Base):
         )
 
 
-class SQLAlchemySampleRepository(domain.SampleRepository):
+class SQLAlchemySampleRepository(repository.SampleRepository):
     """Sample repository using SQLAlchemy."""
 
     def __init__(self, session: orm.Session) -> None:
         self._session = session
 
-    def get_by_id(self, sample_id: domain.Id) -> domain.Sample:
+    def get_by_id(self, sample_id: model.Id) -> model.Sample:
         persistence_sample = self._session.get(Sample, sample_id)
         if persistence_sample is None:
             raise ValueError(f"Sample with id {sample_id} not found")
         return persistence_sample.to_domain()
 
-    def get_all(self) -> tuple[domain.Sample, ...]:
+    def get_all(self) -> tuple[model.Sample, ...]:
         persistence_samples = self._session.query(Sample).all()
         return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
 
-    def update(self, sample: domain.Sample) -> None:
+    def update(self, sample: model.Sample) -> None:
         persistence_sample = Sample.from_domain(sample)
         self._session.merge(persistence_sample)
 
-    def create(self, sample: domain.Sample) -> None:
+    def create(self, sample: model.Sample) -> None:
         persistence_sample = Sample.from_domain(sample)
         self._session.add(persistence_sample)
 
-    def find(self, query: domain.SampleQuery | None = None) -> tuple[domain.Sample, ...]:
+    def find(self, query: repository.SampleQuery | None = None) -> tuple[model.Sample, ...]:
         select_statement = sqlalchemy.select(Sample)
         select_statement = self._apply_filters(select_statement, query)
         persistence_samples = self._session.scalars(select_statement).all()
         return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
 
     def _apply_filters(
-        self, statement: sqlalchemy.sql.Select, query: domain.SampleQuery | None
+        self, statement: sqlalchemy.sql.Select, query: repository.SampleQuery | None
     ) -> sqlalchemy.sql.Select:
         if query is None:
             return statement
@@ -116,7 +116,7 @@ class SQLAlchemySampleRepository(domain.SampleRepository):
         return statement
 
     def _apply_filter_has_label(
-        self, statement: sqlalchemy.sql.Select, query: domain.SampleQuery
+        self, statement: sqlalchemy.sql.Select, query: repository.SampleQuery
     ) -> sqlalchemy.sql.Select:
         if query.has_label is True:
             return statement.where(Sample.text_class.is_not(None))
@@ -125,7 +125,7 @@ class SQLAlchemySampleRepository(domain.SampleRepository):
         return statement
 
     def _apply_filter_has_embedding(
-        self, statement: sqlalchemy.sql.Select, query: domain.SampleQuery
+        self, statement: sqlalchemy.sql.Select, query: repository.SampleQuery
     ) -> sqlalchemy.sql.Select:
         if query.has_embedding is True:
             return statement.where(Sample.embedding.is_not(None))

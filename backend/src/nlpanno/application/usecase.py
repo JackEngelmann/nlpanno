@@ -3,22 +3,23 @@ import logging
 from collections.abc import Sequence
 from typing import Callable
 
-from nlpanno import domain, sampling
+from nlpanno import sampling
 from nlpanno.application import unitofwork
+from nlpanno.domain import model, repository
 
 _LOGGER = logging.getLogger(__name__)
 
 
-EmbeddingFunction = Callable[[Sequence[domain.Sample]], Sequence[domain.Embedding]]
-EmbeddingAggregationFunction = Callable[[Sequence[domain.Embedding]], domain.Embedding]
-VectorSimilarityFunction = Callable[[domain.Embedding, domain.Embedding], float]
+EmbeddingFunction = Callable[[Sequence[model.Sample]], Sequence[model.Embedding]]
+EmbeddingAggregationFunction = Callable[[Sequence[model.Embedding]], model.Embedding]
+VectorSimilarityFunction = Callable[[model.Embedding, model.Embedding], float]
 
 
 def get_next_sample(
     unit_of_work: unitofwork.UnitOfWork, sampler: sampling.Sampler
-) -> domain.Sample | None:
+) -> model.Sample | None:
     with unit_of_work:
-        unlabeled_samples = unit_of_work.samples.find(domain.SampleQuery(has_label=False))
+        unlabeled_samples = unit_of_work.samples.find(repository.SampleQuery(has_label=False))
         sample_id = sampler(unlabeled_samples)
         if sample_id is None:
             return None
@@ -26,8 +27,8 @@ def get_next_sample(
 
 
 def annotate_sample(
-    unit_of_work: unitofwork.UnitOfWork, sample_id: domain.Id, text_class: str | None
-) -> domain.Sample:
+    unit_of_work: unitofwork.UnitOfWork, sample_id: model.Id, text_class: str | None
+) -> model.Sample:
     with unit_of_work:
         sample = unit_of_work.samples.get_by_id(sample_id)
         sample.annotate(text_class)
@@ -40,7 +41,7 @@ def embed_all_samples(
     unit_of_work: unitofwork.UnitOfWork, embedding_function: EmbeddingFunction
 ) -> bool:
     with unit_of_work:
-        samples = unit_of_work.samples.find(domain.SampleQuery(has_embedding=False))
+        samples = unit_of_work.samples.find(repository.SampleQuery(has_embedding=False))
         if len(samples) == 0:
             return False
         embeddings = embedding_function(samples)
@@ -58,7 +59,7 @@ def estimate_samples(
 ) -> None:
     with unit_of_work:
         class_embeddings = _calculate_class_embeddings(unit_of_work, embedding_aggregation_function)
-        query = domain.SampleQuery(has_label=True, has_embedding=True)
+        query = repository.SampleQuery(has_label=True, has_embedding=True)
         samples = unit_of_work.samples.find(query)
         for sample in samples:
             _LOGGER.debug(f"Estimating sample {sample.id}")
@@ -72,23 +73,23 @@ def estimate_samples(
 
 
 def _calculate_class_estimates(
-    sample_embedding: domain.Embedding,
-    class_embeddings: dict[str, domain.Embedding],
+    sample_embedding: model.Embedding,
+    class_embeddings: dict[str, model.Embedding],
     vector_similarity_function: VectorSimilarityFunction,
-) -> tuple[domain.ClassEstimate, ...]:
+) -> tuple[model.ClassEstimate, ...]:
     class_estimates = []
     for text_class, class_embedding in class_embeddings.items():
         similarity = vector_similarity_function(sample_embedding, class_embedding)
-        class_estimates.append(domain.ClassEstimate.create(text_class, similarity))
+        class_estimates.append(model.ClassEstimate.create(text_class, similarity))
     return tuple(class_estimates)
 
 
 def _calculate_class_embeddings(
     unit_of_work: unitofwork.UnitOfWork,
     embedding_aggregation_function: EmbeddingAggregationFunction,
-) -> dict[str, domain.Embedding]:
-    samples = unit_of_work.samples.find(domain.SampleQuery(has_embedding=True, has_label=True))
-    embeddings_by_class: dict[str, list[domain.Embedding]] = collections.defaultdict(list)
+) -> dict[str, model.Embedding]:
+    samples = unit_of_work.samples.find(repository.SampleQuery(has_embedding=True, has_label=True))
+    embeddings_by_class: dict[str, list[model.Embedding]] = collections.defaultdict(list)
 
     for sample in samples:
         assert sample.embedding is not None

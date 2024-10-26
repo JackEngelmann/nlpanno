@@ -5,7 +5,7 @@ import logging
 import pathlib
 from collections.abc import Iterator
 
-from nlpanno import domain
+from nlpanno.domain import model
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -14,8 +14,8 @@ _LOG = logging.getLogger("nlpanno")
 class Dataset:
     """Base class for datasets."""
 
-    task_config: domain.AnnotationTask
-    samples: tuple[domain.Sample, ...]
+    task_config: model.AnnotationTask
+    samples: tuple[model.Sample, ...]
 
 
 class MTOP(Dataset):
@@ -37,9 +37,9 @@ class MTOP(Dataset):
         _LOG.info(f"Samples: {len(samples)}")
         super().__init__(task_config, samples)
 
-    def _read_data(self) -> tuple[tuple[domain.Sample, ...], domain.AnnotationTask]:
+    def _read_data(self) -> tuple[tuple[model.Sample, ...], model.AnnotationTask]:
         """Load data from disk."""
-        samples: list[domain.Sample] = []
+        samples: list[model.Sample] = []
         text_classes: set[str] = set()
         for line in self._read_lines():
             _LOG.info(f"Line: {line}")
@@ -49,10 +49,10 @@ class MTOP(Dataset):
             samples.append(sample)
             text_classes.add(text_class)
         sorted_text_classes = tuple(sorted(text_classes))
-        task_config = domain.AnnotationTask(sorted_text_classes)
+        task_config = model.AnnotationTask(sorted_text_classes)
         return tuple(samples), task_config
 
-    def _limit_hit(self, samples: list[domain.Sample]) -> bool:
+    def _limit_hit(self, samples: list[model.Sample]) -> bool:
         """Check if the limit has been hit."""
         if self._limit is None:
             return False
@@ -65,10 +65,10 @@ class MTOP(Dataset):
             with open(data_file_path, encoding="utf-8") as input_file:
                 yield from input_file
 
-    def _parse_line(self, line: str) -> tuple[domain.Sample, str]:
+    def _parse_line(self, line: str) -> tuple[model.Sample, str]:
         """Parse a line from the data file."""
         _, text_class, _, text, *_ = line.split("\t")
         text_class = text_class[3:].replace("_", " ").lower()
         if self._add_class_to_text:
             text += f" ({text_class})"
-        return domain.Sample(domain.create_id(), text, None), text_class
+        return model.Sample(model.create_id(), text, None), text_class

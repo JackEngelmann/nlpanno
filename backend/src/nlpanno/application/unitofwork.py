@@ -2,7 +2,7 @@ import abc
 from types import TracebackType
 from typing import Self
 
-from nlpanno import domain
+from nlpanno.domain import repository
 
 
 class UnitOfWork(abc.ABC):
@@ -23,7 +23,7 @@ class UnitOfWork(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def samples(self) -> domain.SampleRepository:
+    def samples(self) -> repository.SampleRepository:
         raise NotImplementedError()
 
     @abc.abstractmethod
