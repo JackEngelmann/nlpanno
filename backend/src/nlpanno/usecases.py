@@ -3,6 +3,7 @@ import collections
 import logging
 from collections.abc import Sequence
 from typing import Callable
+from dataclasses import dataclass
 
 from nlpanno import domain, sampling
 
@@ -14,12 +15,25 @@ EmbeddingAggregationFunction = Callable[[Sequence[domain.Embedding]], domain.Emb
 VectorSimilarityFunction = Callable[[domain.Embedding, domain.Embedding], float]
 
 
+@dataclass
+class SampleQuery:
+    """Query for finding samples."""
+
+    has_label: bool | None = None
+    has_embedding: bool | None = None
+
+
 class SampleRepository(abc.ABC):
     """Base class for all sample repositories."""
 
     @abc.abstractmethod
     def get_by_id(self, id_: domain.Id) -> domain.Sample:
         """Get a sample by the unique identifier."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def find(self, query: SampleQuery | None = None) -> tuple[domain.Sample, ...]:
+        """Find samples by the given query."""
         raise NotImplementedError()
 
     @abc.abstractmethod

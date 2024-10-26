@@ -3,7 +3,8 @@
 import pytest
 import sqlalchemy.orm
 
-from nlpanno import database, domain, infrastructure
+from nlpanno import database, domain, infrastructure, usecases
+import torch
 
 
 class TestSampleRepository:
@@ -90,6 +91,39 @@ class TestSampleRepository:
             unlabeled_samples = sample_repository.get_unlabeled()
             assert len(unlabeled_samples) == 1
             assert unlabeled_samples[0].id == unlabeled_id
+    
+    @staticmethod
+    @pytest.mark.parametrize(
+        "query, expected_sample_ids",
+        [
+            (usecases.SampleQuery(), ("1", "2", "3", "4")),
+            (usecases.SampleQuery(has_label=True), ("1", "4")),
+            (usecases.SampleQuery(has_label=False), ("2", "3")),
+            (usecases.SampleQuery(has_embedding=True), ("3", "4")),
+            (usecases.SampleQuery(has_embedding=False), ("1", "2")),
+        ],
+    )
+    def test_find(
+        session_factory: infrastructure.SessionFactory,
+        query: usecases.SampleQuery,
+        expected_sample_ids: tuple[domain.Id, ...],
+    ) -> None:
+        """Test finding samples by query."""
+        samples = (
+            domain.Sample("1", "text 1", "class"),
+            domain.Sample("2", "text 2", None),
+            domain.Sample("3", "text 3", None, torch.rand(10)),
+            domain.Sample("4", "text 4", "class", torch.rand(10)),
+        )
+        with session_factory() as session:
+            sample_repository = session.sample_repository
+            for sample in samples:
+                sample_repository.create(sample)
+            session.commit()
+            found_samples = sample_repository.find(query)
+        assert len(found_samples) == len(expected_sample_ids)
+        found_sample_ids = tuple(sample.id for sample in found_samples)
+        assert set(found_sample_ids) == set(expected_sample_ids)
 
 
 @pytest.fixture(params=("inmemory", "sqlalchemy"))

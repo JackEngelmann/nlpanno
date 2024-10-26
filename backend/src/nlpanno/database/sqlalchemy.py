@@ -78,7 +78,7 @@ class ClassEstimate(Base):
 class SQLAlchemySampleRepository(usecases.SampleRepository):
     """Sample repository using SQLAlchemy."""
 
-    def __init__(self, session: sqlalchemy.orm.Session) -> None:
+    def __init__(self, session: orm.Session) -> None:
         self._session = session
 
     def get_by_id(self, sample_id: domain.Id) -> domain.Sample:
@@ -115,6 +115,22 @@ class SQLAlchemySampleRepository(usecases.SampleRepository):
         _LOG.info(f"Sample: {sample}")
         persistence_sample = Sample.from_domain(sample)
         self._session.add(persistence_sample)
+
+    def find(self, query: usecases.SampleQuery = usecases.SampleQuery()) -> tuple[domain.Sample, ...]:
+        filters = []
+
+        if query.has_label is True:
+            filters.append(Sample.text_class.is_not(None))
+        elif query.has_label is False:
+            filters.append(Sample.text_class.is_(None))
+
+        if query.has_embedding is True:
+            filters.append(Sample.embedding.is_not(None))
+        elif query.has_embedding is False:
+            filters.append(Sample.embedding.is_(None))
+
+        persistence_samples = self._session.query(Sample).filter(*filters)
+        return tuple(persistence_sample.to_domain() for persistence_sample in persistence_samples)
 
 
 # TODO: add rollback.
