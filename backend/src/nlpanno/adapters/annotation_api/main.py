@@ -4,7 +4,8 @@ import fastapi
 
 from nlpanno import domain, sampling
 from nlpanno.application import unitofwork
-from . import controller_sample, controller_task, middlewares, requestcontext, controller_static
+
+from . import controller_sample, controller_static, controller_task, middlewares, requestcontext
 
 
 def create_app(

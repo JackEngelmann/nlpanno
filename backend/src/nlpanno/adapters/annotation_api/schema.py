@@ -4,8 +4,6 @@ from typing import Optional
 
 import pydantic
 
-from nlpanno import domain
-
 
 class BaseSchema(pydantic.BaseModel):
     """Base data transfer object."""

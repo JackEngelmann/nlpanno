@@ -1,8 +1,7 @@
 import logging
-import time
 
-from nlpanno.application import usecase, unitofwork
 from nlpanno import worker
+from nlpanno.application import unitofwork, usecase
 
 # TODO: use different logger.
 _LOGGER = logging.getLogger("nlpanno")
@@ -11,7 +10,11 @@ _LOGGER = logging.getLogger("nlpanno")
 class EmbeddingWorker(worker.Worker):
     """Worker for embedding."""
 
-    def __init__(self, embedding_function: usecase.EmbeddingFunction, unit_of_work_factory: unitofwork.UnitOfWorkFactory) -> None:
+    def __init__(
+        self,
+        embedding_function: usecase.EmbeddingFunction,
+        unit_of_work_factory: unitofwork.UnitOfWorkFactory,
+    ) -> None:
         super().__init__(logger=_LOGGER, name="embedding", sleep_time=10)
         self._embedding_function = embedding_function
         self._unit_of_work_factory = unit_of_work_factory

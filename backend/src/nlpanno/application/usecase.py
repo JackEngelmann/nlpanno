@@ -63,7 +63,9 @@ def estimate_samples(
         for sample in samples:
             _LOGGER.debug(f"Estimating sample {sample.id}")
             assert sample.embedding is not None
-            class_estimates = _calculate_class_estimates(sample.embedding, class_embeddings, vector_similarity_function)
+            class_estimates = _calculate_class_estimates(
+                sample.embedding, class_embeddings, vector_similarity_function
+            )
             sample.add_class_estimates(class_estimates)
             unit_of_work.samples.update(sample)
         unit_of_work.commit()

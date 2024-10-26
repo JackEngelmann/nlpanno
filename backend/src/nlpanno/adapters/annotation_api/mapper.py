@@ -1,4 +1,5 @@
 from nlpanno import domain
+
 from . import schema
 
 

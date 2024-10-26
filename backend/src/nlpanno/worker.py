@@ -1,7 +1,7 @@
-import logging
 import enum
-from abc import abstractmethod
+import logging
 import time
+from abc import abstractmethod
 
 
 class ProcessResult(enum.Enum):
@@ -15,8 +15,10 @@ class ProcessResult(enum.Enum):
 class Worker:
     """A worker."""
 
-    def __init__(self, logger: logging.Logger, name: str, sleep_time: float, stop_on_error: bool = True) -> None:
-        """Initialize the worker."""    
+    def __init__(
+        self, logger: logging.Logger, name: str, sleep_time: float, stop_on_error: bool = True
+    ) -> None:
+        """Initialize the worker."""
         self._logger = logger
         self._name = name
         self._sleep_time = sleep_time
@@ -32,11 +34,14 @@ class Worker:
         self._logger.info(f"Starting the worker {self._name}")
         while True:
             result = self._wrapped_process()
-            self._handle_result(result)
-    
+            result_handler = self._result_handlers[result]
+            result_handler()
+
     def _handle_nothing_to_do(self) -> None:
         """Handle the nothing to do result."""
-        self._logger.info(f"Worker {self._name} did no work, sleeping for {self._sleep_time} seconds.")
+        self._logger.info(
+            f"Worker {self._name} did no work, sleeping for {self._sleep_time} seconds."
+        )
         time.sleep(self._sleep_time)
 
     def _handle_finished_work(self) -> None:

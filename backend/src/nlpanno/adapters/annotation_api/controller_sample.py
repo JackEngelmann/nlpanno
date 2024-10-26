@@ -5,6 +5,7 @@ import fastapi.staticfiles
 import fastapi.templating
 
 from nlpanno.application import usecase
+
 from . import mapper, requestcontext, schema
 
 router = fastapi.APIRouter(prefix="/samples")

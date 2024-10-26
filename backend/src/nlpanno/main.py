@@ -1,12 +1,14 @@
 """Example script to annotate MTOP data aided by mean embeddings."""
 
-import logging
-
 import typer
 import uvicorn
 
-from nlpanno import annotation, config, container, datasets, domain
+import nlpanno.logging
+from nlpanno import config, container, datasets, domain
+from nlpanno.adapters import annotation_api
 from nlpanno.application import unitofwork
+
+nlpanno.logging.configure_logging()
 
 settings = config.ApplicationSettings()
 dependency_container = container.DependencyContainer(settings)
@@ -18,7 +20,6 @@ app = typer.Typer()
 @app.command()
 def start_annotation() -> None:
     """Start the annotation server."""
-    logging.basicConfig(level=logging.DEBUG)
     sampler = dependency_container.create_sampler()
     unit_of_work_factory = dependency_container.create_unit_of_work_factory()
     with unit_of_work_factory() as unit_of_work:
@@ -27,7 +28,7 @@ def start_annotation() -> None:
         unit_of_work.commit()
 
     global server_app
-    server_app = annotation.create_app(
+    server_app = annotation_api.create_app(
         unit_of_work_factory,
         task_config,
         sampler,
@@ -39,17 +40,15 @@ def start_annotation() -> None:
 @app.command()
 def start_embedding_loop() -> None:
     """Start the embedding loop."""
-    logging.basicConfig(level=logging.INFO)
-    embedding_processor = dependency_container.create_embedding_processor()
-    embedding_processor.loop()
+    embedding_processor = dependency_container.create_embedding_worker()
+    embedding_processor.start()
 
 
 @app.command()
 def start_estimation_loop() -> None:
     """Start the estimation loop."""
-    logging.basicConfig(level=logging.INFO)
-    estimation_processor = dependency_container.create_estimation_processor()
-    estimation_processor.loop()
+    estimation_processor = dependency_container.create_estimation_worker()
+    estimation_processor.start()
 
 
 def _fill_db_with_test_data(unit_of_work: unitofwork.UnitOfWork) -> domain.AnnotationTask:

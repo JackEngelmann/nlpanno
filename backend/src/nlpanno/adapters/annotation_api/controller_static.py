@@ -12,9 +12,11 @@ _TEMPLATES = fastapi.templating.Jinja2Templates(directory=_TEMPLATES_DIR)
 
 router = fastapi.APIRouter()
 
+
 def create_main_page_html_response(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
     """Create a main page HTML response."""
     return _TEMPLATES.TemplateResponse(_MAIN_PAGE_FILENAME, {"request": request})
+
 
 @router.get("/")
 async def serve_main_html_page(request: fastapi.Request) -> fastapi.responses.HTMLResponse:
@@ -26,4 +28,3 @@ def initialize(app: fastapi.FastAPI) -> None:
     """Initialize the static files controller."""
     app.mount("/assets", fastapi.staticfiles.StaticFiles(directory=_STATIC_DIR), name="static")
     app.include_router(router)
-

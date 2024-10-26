@@ -1,8 +1,10 @@
-from .inmemory import InMemorySampleRepository, InMemoryUnitOfWorkFactory, InMemoryUnitOfWork
+from .embedding_worker import EmbeddingWorker
+from .estimation_worker import EstimationWorker
+from .inmemory import InMemorySampleRepository, InMemoryUnitOfWork, InMemoryUnitOfWorkFactory
 from .sqlalchemy import (
     SQLAlchemySampleRepository,
-    SQLAlchemyUnitOfWorkFactory,
     SQLAlchemyUnitOfWork,
+    SQLAlchemyUnitOfWorkFactory,
 )
 
 __all__ = [
@@ -12,4 +14,6 @@ __all__ = [
     "InMemorySampleRepository",
     "InMemoryUnitOfWorkFactory",
     "InMemoryUnitOfWork",
+    "EstimationWorker",
+    "EmbeddingWorker",
 ]

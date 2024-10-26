@@ -89,6 +89,7 @@ class TestSampleRepository:
 @pytest.fixture(params=("inmemory", "sqlalchemy"))
 def unit_of_work(request: pytest.FixtureRequest) -> unitofwork.UnitOfWork:
     """Fixture creating a unit of work."""
+    factory: unitofwork.UnitOfWorkFactory
     if request.param == "inmemory":
         factory = adapters.InMemoryUnitOfWorkFactory()
     elif request.param == "sqlalchemy":

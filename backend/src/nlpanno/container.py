@@ -6,15 +6,12 @@ import sqlalchemy
 import torch
 
 from nlpanno import (
+    adapters,
     config,
-    database,
     domain,
-    embedding,
-    estimation,
     sampling,
-    unitofwork,
-    usecases,
 )
+from nlpanno.application import unitofwork, usecase
 
 _LOG = logging.getLogger("nlpanno")
 
@@ -29,9 +26,9 @@ class DependencyContainer:
         self._engine = sqlalchemy.create_engine(self.settings.database_url)
 
     def create_unit_of_work_factory(self) -> unitofwork.UnitOfWorkFactory:
-        return database.SQLAlchemyUnitOfWorkFactory(self._engine)
+        return adapters.SQLAlchemyUnitOfWorkFactory(self._engine)
 
-    def create_embedding_function(self) -> usecases.EmbeddingFunction:
+    def create_embedding_function(self) -> usecase.EmbeddingFunction:
         model = sentence_transformers.SentenceTransformer(self.settings.embedding_model_name)
         _LOG.info("finished loading embedding model")
 
@@ -41,7 +38,7 @@ class DependencyContainer:
 
         return embedding_function
 
-    def create_embedding_aggregation_function(self) -> usecases.EmbeddingAggregationFunction:
+    def create_embedding_aggregation_function(self) -> usecase.EmbeddingAggregationFunction:
         def embedding_aggregation_function(
             embeddings: Sequence[domain.Embedding],
         ) -> domain.Embedding:
@@ -50,7 +47,7 @@ class DependencyContainer:
 
         return embedding_aggregation_function
 
-    def create_vector_similarity_function(self) -> usecases.VectorSimilarityFunction:
+    def create_vector_similarity_function(self) -> usecase.VectorSimilarityFunction:
         def vector_similarity_function(
             sample_embedding: domain.Embedding, class_embedding: domain.Embedding
         ) -> float:
@@ -60,16 +57,16 @@ class DependencyContainer:
 
         return vector_similarity_function
 
-    def create_embedding_processor(self) -> embedding.EmbeddingProcessor:
+    def create_embedding_worker(self) -> adapters.EmbeddingWorker:
         embedding_function = self.create_embedding_function()
         unit_of_work_factory = self.create_unit_of_work_factory()
-        return embedding.EmbeddingProcessor(embedding_function, unit_of_work_factory)
+        return adapters.EmbeddingWorker(embedding_function, unit_of_work_factory)
 
-    def create_estimation_processor(self) -> estimation.EstimationProcessor:
+    def create_estimation_worker(self) -> adapters.EstimationWorker:
         unit_of_work_factory = self.create_unit_of_work_factory()
         embedding_aggregation_function = self.create_embedding_aggregation_function()
         vector_similarity_function = self.create_vector_similarity_function()
-        return estimation.EstimationProcessor(
+        return adapters.EstimationWorker(
             unit_of_work_factory, embedding_aggregation_function, vector_similarity_function
         )
 
