@@ -8,6 +8,7 @@ Id = str
 Embedding = torch.Tensor
 
 
+# TODO: Move to another place.
 def create_id() -> Id:
     """Create unique identifier."""
     return str(uuid.uuid4())
