@@ -19,7 +19,8 @@ def patch(
 ) -> schema.SampleReadSchema:
     """Patch (partial update) a sample."""
     unit_of_work = request_context.unit_of_work_factory()
-    sample = usecase.annotate_sample(unit_of_work, sample_id, sample_patch.text_class_id)
+    annotate_sample_use_case = usecase.AnnotateSampleUseCase(unit_of_work)
+    sample = annotate_sample_use_case.execute(sample_id, sample_patch.text_class_id)
     with unit_of_work:
         annotation_task = unit_of_work.annotation_tasks.get_by_id(sample.annotation_task_id)
     return mapper.map_sample_to_read_schema(sample, annotation_task)

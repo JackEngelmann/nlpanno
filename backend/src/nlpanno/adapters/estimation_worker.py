@@ -17,14 +17,14 @@ class EstimationWorker(worker.Worker):
         vector_similarity_service: service.VectorSimilarityService,
     ) -> None:
         super().__init__(logger=_LOGGER, name="estimation", sleep_time=10)
-        self._unit_of_work_factory = unit_of_work_factory
-        self._embedding_aggregation_service = embedding_aggregation_service
-        self._vector_similarity_service = vector_similarity_service
+        unit_of_work = unit_of_work_factory()
+        self._estimate_samples_use_case = usecase.EstimateSamplesUseCase(
+            embedding_aggregation_service, vector_similarity_service, unit_of_work
+        )
 
     def _process(self) -> worker.ProcessResult:
         """Process the worker."""
-        unit_of_work = self._unit_of_work_factory()
-        usecase.estimate_samples(
-            unit_of_work, self._embedding_aggregation_service, self._vector_similarity_service
-        )
-        return worker.ProcessResult.FINISHED_WORK
+        did_work = self._estimate_samples_use_case.execute(self._unit_of_work)
+        if did_work:
+            return worker.ProcessResult.FINISHED_WORK
+        return worker.ProcessResult.NOTHING_TO_DO

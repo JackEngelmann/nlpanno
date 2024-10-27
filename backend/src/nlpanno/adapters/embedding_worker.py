@@ -16,14 +16,15 @@ class EmbeddingWorker(worker.Worker):
         unit_of_work_factory: unitofwork.UnitOfWorkFactory,
     ) -> None:
         super().__init__(logger=_LOGGER, name="embedding", sleep_time=10)
-        self._embedding_service = embedding_service
-        self._unit_of_work_factory = unit_of_work_factory
+        unit_of_work = unit_of_work_factory()
+        self._embed_all_samples_use_case = usecase.EmbedAllSamplesUseCase(
+            embedding_service, unit_of_work
+        )
 
     def _process(self) -> worker.ProcessResult:
         """Process the worker."""
-        unit_of_work = self._unit_of_work_factory()
         # TODO: should the use case return the process result?
-        did_work = usecase.embed_all_samples(unit_of_work, self._embedding_service)
+        did_work = self._embed_all_samples_use_case.execute(self._unit_of_work)
         if did_work:
             return worker.ProcessResult.FINISHED_WORK
         return worker.ProcessResult.NOTHING_TO_DO

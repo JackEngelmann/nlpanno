@@ -28,7 +28,8 @@ def get_next_sample(
 ) -> schema.SampleReadSchema | None:
     """Get the next sample (e.g. for annotation)."""
     unit_of_work = request_context.unit_of_work_factory()
-    sample = usecase.get_next_sample(unit_of_work, request_context.sampler, task_id)
+    get_next_sample_use_case = usecase.GetNextSampleUseCase(request_context.sampler, unit_of_work)
+    sample = get_next_sample_use_case.execute(task_id)
     if sample is None:
         return None
     with unit_of_work:
