@@ -116,11 +116,3 @@ class InMemoryUnitOfWork(unitofwork.UnitOfWork):
 
     def create_tables(self) -> None:
         pass
-
-
-class InMemoryUnitOfWorkFactory(unitofwork.UnitOfWorkFactory):
-    def __init__(self) -> None:
-        self._unit_of_work = InMemoryUnitOfWork()
-
-    def __call__(self) -> unitofwork.UnitOfWork:
-        return self._unit_of_work

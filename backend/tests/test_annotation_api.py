@@ -5,7 +5,7 @@ import fastapi.testclient
 import pytest
 
 import nlpanno.adapters.persistence.inmemory
-from nlpanno.adapters import annotation_api, sampling
+from nlpanno.adapters import annotation_api
 from nlpanno.domain import model
 
 _GET_TASK_ENDPOINT = "/api/tasks/{task_id}"
@@ -93,16 +93,15 @@ def create_client(
     if task_config is None:
         task_config = model.AnnotationTask(model.create_id(), ())
 
-    unit_of_work_factory = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWorkFactory()
-    with unit_of_work_factory() as unit_of_work:
+    # TODO: this doesn't work.
+    unit_of_work = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWork()
+    with unit_of_work:
         for sample in samples:
             unit_of_work.samples.create(sample)
         unit_of_work.annotation_tasks.create(task_config)
         unit_of_work.commit()
 
     app = annotation_api.create_app(
-        unit_of_work_factory,
-        sampling.RandomSamplingService(),
         include_static_files=False,
     )
     return fastapi.testclient.TestClient(app)

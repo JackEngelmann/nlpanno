@@ -1,75 +1,91 @@
-import logging
-from collections.abc import Sequence
-
-import sentence_transformers
+import dependency_injector.containers
+import dependency_injector.providers
 import sqlalchemy
-import torch
 
+import nlpanno.adapters.embedding_transformers
 import nlpanno.adapters.persistence.sqlalchemy
-from nlpanno import (
-    adapters,
-    config,
-    sampling,
-)
-from nlpanno.application import unitofwork, usecase
-from nlpanno.domain import model
-
-_LOG = logging.getLogger("nlpanno")
+import nlpanno.adapters.sampling
+import nlpanno.application.unitofwork
+import nlpanno.application.usecase
+import nlpanno.config
 
 
-# TODO: proper dependency injection.
-class DependencyContainer:
-    """Container for dependencies."""
+class Container(dependency_injector.containers.DeclarativeContainer):
+    config = dependency_injector.providers.Configuration()
 
-    def __init__(self, settings: config.ApplicationSettings) -> None:
-        self.settings = settings
-        _LOG.info("Database URL: %s", self.settings.database_url)
-        self._engine = sqlalchemy.create_engine(self.settings.database_url)
+    database_engine = dependency_injector.providers.Singleton(
+        sqlalchemy.create_engine,
+        config.database_url,
+    )
 
-    def create_unit_of_work_factory(self) -> unitofwork.UnitOfWorkFactory:
-        return nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWorkFactory(self._engine)
+    _sqlalchemy_session = dependency_injector.providers.Factory(
+        sqlalchemy.orm.sessionmaker,
+        bind=database_engine,
+    )
 
-    def create_embedding_function(self) -> usecase.EmbeddingFunction:
-        transformer = sentence_transformers.SentenceTransformer(self.settings.embedding_model_name)
-        _LOG.info("finished loading embedding model")
+    unit_of_work = dependency_injector.providers.Factory(
+        nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWork,
+        database_engine,
+    )
 
-        def embedding_function(samples: Sequence[model.Sample]) -> Sequence[model.Embedding]:
-            texts = list(sample.text for sample in samples)
-            return transformer.encode(texts, convert_to_tensor=True)  # type: ignore
+    ###
+    # Services
+    ###
 
-        return embedding_function
+    embedding_service = dependency_injector.providers.Factory(
+        nlpanno.adapters.embedding_transformers.TransformersEmbeddingService,
+        config.embedding_model_name,
+    )
 
-    def create_embedding_aggregation_function(self) -> usecase.EmbeddingAggregationFunction:
-        def embedding_aggregation_function(
-            embeddings: Sequence[model.Embedding],
-        ) -> model.Embedding:
-            stacked = torch.stack(list(embeddings), dim=0)
-            return torch.mean(stacked, dim=0)
+    embedding_aggregation_service = dependency_injector.providers.Factory(
+        nlpanno.adapters.embedding_transformers.TransformersEmbeddingAggregationService,
+    )
 
-        return embedding_aggregation_function
+    sampling_service = dependency_injector.providers.Factory(
+        nlpanno.adapters.sampling.RandomSamplingService,
+    )
 
-    def create_vector_similarity_function(self) -> usecase.VectorSimilarityFunction:
-        def vector_similarity_function(
-            sample_embedding: model.Embedding, class_embedding: model.Embedding
-        ) -> float:
-            return sentence_transformers.util.pytorch_cos_sim(
-                class_embedding, sample_embedding
-            ).item()
+    vector_similarity_service = dependency_injector.providers.Factory(
+        nlpanno.adapters.embedding_transformers.TransformersVectorSimilarityService,
+    )
 
-        return vector_similarity_function
+    ###
+    # Use cases
+    ###
 
-    def create_embedding_worker(self) -> adapters.EmbeddingWorker:
-        embedding_function = self.create_embedding_function()
-        unit_of_work_factory = self.create_unit_of_work_factory()
-        return adapters.EmbeddingWorker(embedding_function, unit_of_work_factory)
+    get_next_sample_use_case = dependency_injector.providers.Factory(
+        nlpanno.application.usecase.GetNextSampleUseCase,
+        sampling_service,
+        unit_of_work,
+    )
 
-    def create_estimation_worker(self) -> adapters.EstimationWorker:
-        unit_of_work_factory = self.create_unit_of_work_factory()
-        embedding_aggregation_function = self.create_embedding_aggregation_function()
-        vector_similarity_function = self.create_vector_similarity_function()
-        return adapters.EstimationWorker(
-            unit_of_work_factory, embedding_aggregation_function, vector_similarity_function
-        )
+    annotate_sample_use_case = dependency_injector.providers.Factory(
+        nlpanno.application.usecase.AnnotateSampleUseCase,
+        unit_of_work,
+    )
 
-    def create_sampler(self) -> sampling.Sampler:
-        return sampling.RandomSampler()
+    embed_all_samples_use_case = dependency_injector.providers.Factory(
+        nlpanno.application.usecase.EmbedAllSamplesUseCase,
+        embedding_service,
+        unit_of_work,
+    )
+
+    estimate_samples_use_case = dependency_injector.providers.Factory(
+        nlpanno.application.usecase.EstimateSamplesUseCase,
+        embedding_service,
+        vector_similarity_service,
+        unit_of_work,
+    )
+
+    fetch_annotation_task_use_case = dependency_injector.providers.Factory(
+        nlpanno.application.usecase.FetchAnnotationTaskUseCase,
+        unit_of_work,
+    )
+
+
+def create_container(settings: nlpanno.config.ApplicationSettings | None = None) -> Container:
+    if settings is None:
+        settings = nlpanno.config.ApplicationSettings()
+    container = Container()
+    container.config.from_dict(settings.model_dump())
+    return container

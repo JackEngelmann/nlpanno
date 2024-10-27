@@ -255,13 +255,3 @@ class SQLAlchemyUnitOfWork(unitofwork.UnitOfWork):
     def create_tables(self) -> None:
         _LOG.info("Creating tables")
         Base.metadata.create_all(self._engine)
-
-
-class SQLAlchemyUnitOfWorkFactory(unitofwork.UnitOfWorkFactory):
-    """Session factory using SQLAlchemy."""
-
-    def __init__(self, engine: sqlalchemy.engine.Engine) -> None:
-        self._engine = engine
-
-    def __call__(self) -> unitofwork.UnitOfWork:
-        return SQLAlchemyUnitOfWork(self._engine)

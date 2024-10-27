@@ -118,15 +118,13 @@ class TestAnnotationTaskRepository:
 @pytest.fixture(params=("inmemory", "sqlalchemy"))
 def unit_of_work(request: pytest.FixtureRequest) -> unitofwork.UnitOfWork:
     """Fixture creating a unit of work."""
-    factory: unitofwork.UnitOfWorkFactory
     if request.param == "inmemory":
-        factory = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWorkFactory()
+        unit_of_work = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWork()
     elif request.param == "sqlalchemy":
         engine = sqlalchemy.create_engine("sqlite://")
-        factory = nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWorkFactory(engine)
+        unit_of_work = nlpanno.adapters.persistence.sqlalchemy.SQLAlchemyUnitOfWork(engine)
     else:
         raise ValueError(f"Unknown unit of work factory: {request.param}")
-    unit_of_work = factory()
     with unit_of_work:
         unit_of_work.create_tables()
         unit_of_work.commit()

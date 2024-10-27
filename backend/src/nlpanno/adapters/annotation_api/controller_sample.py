@@ -1,12 +1,12 @@
 """Implementation of the HTTP endpoints."""
 
 import fastapi
-import fastapi.staticfiles
-import fastapi.templating
+from dependency_injector.wiring import Provide
 
 from nlpanno.application import usecase
+from nlpanno.container import Container
 
-from . import mapper, requestcontext, schema
+from . import mapper, schema
 
 router = fastapi.APIRouter(prefix="/samples")
 
@@ -15,12 +15,14 @@ router = fastapi.APIRouter(prefix="/samples")
 def patch(
     sample_id: str,
     sample_patch: schema.SamplePatchSchema,
-    request_context: requestcontext.RequestContext = requestcontext.DEPENDS,
+    annotate_sample_use_case: usecase.AnnotateSampleUseCase = fastapi.Depends(  # noqa: B008
+        Provide[Container.annotate_sample_use_case]
+    ),
+    fetch_annotation_task_use_case: usecase.FetchAnnotationTaskUseCase = fastapi.Depends(  # noqa: B008
+        Provide[Container.fetch_annotation_task_use_case]
+    ),
 ) -> schema.SampleReadSchema:
     """Patch (partial update) a sample."""
-    unit_of_work = request_context.unit_of_work_factory()
-    annotate_sample_use_case = usecase.AnnotateSampleUseCase(unit_of_work)
     sample = annotate_sample_use_case.execute(sample_id, sample_patch.text_class_id)
-    with unit_of_work:
-        annotation_task = unit_of_work.annotation_tasks.get_by_id(sample.annotation_task_id)
+    annotation_task = fetch_annotation_task_use_case.execute(sample.annotation_task_id)
     return mapper.map_sample_to_read_schema(sample, annotation_task)

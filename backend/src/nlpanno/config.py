@@ -12,3 +12,5 @@ class ApplicationSettings(pydantic_settings.BaseSettings):
     port: int = 8000
     host: str = "0.0.0.0"
     # TODO: Add dataset options.
+
+    backend_serves_static_files: bool = False
