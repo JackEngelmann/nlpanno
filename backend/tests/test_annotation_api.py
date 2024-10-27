@@ -5,8 +5,7 @@ import fastapi.testclient
 import pytest
 
 import nlpanno.adapters.persistence.inmemory
-from nlpanno import sampling
-from nlpanno.adapters import annotation_api
+from nlpanno.adapters import annotation_api, sampling
 from nlpanno.domain import model
 
 _GET_TASK_ENDPOINT = "/api/tasks/{task_id}"
@@ -103,7 +102,7 @@ def create_client(
 
     app = annotation_api.create_app(
         unit_of_work_factory,
-        sampling.RandomSampler(),
+        sampling.RandomSamplingService(),
         include_static_files=False,
     )
     return fastapi.testclient.TestClient(app)

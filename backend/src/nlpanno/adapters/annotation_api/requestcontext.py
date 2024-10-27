@@ -4,8 +4,7 @@ import dataclasses
 
 import fastapi
 
-from nlpanno import sampling
-from nlpanno.application import unitofwork
+from nlpanno.application import service, unitofwork
 
 
 @dataclasses.dataclass
@@ -13,13 +12,13 @@ class RequestContext:
     """Request context."""
 
     unit_of_work_factory: unitofwork.UnitOfWorkFactory
-    sampler: sampling.Sampler
+    sampler: service.SamplingService
 
 
 def setup_request_context(
     app: fastapi.FastAPI,
     unit_of_work_factory: unitofwork.UnitOfWorkFactory,
-    sampler: sampling.Sampler,
+    sampler: service.SamplingService,
 ) -> None:
     """Setup the request context."""
     app.state.request_context = RequestContext(

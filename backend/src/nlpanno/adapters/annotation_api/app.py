@@ -2,15 +2,14 @@
 
 import fastapi
 
-from nlpanno import sampling
-from nlpanno.application import unitofwork
+from nlpanno.application import service, unitofwork
 
 from . import controller_sample, controller_static, controller_task, middlewares, requestcontext
 
 
 def create_app(
     unit_of_work_factory: unitofwork.UnitOfWorkFactory,
-    sampler: sampling.Sampler,
+    sampler: service.SamplingService,
     include_static_files: bool = True,
 ) -> fastapi.FastAPI:
     """Create the fastAPI app."""
