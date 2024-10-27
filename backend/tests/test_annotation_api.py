@@ -101,5 +101,5 @@ def create_client(
         unit_of_work.commit()
 
     app = annotation_api.create_app()
-    app.container.unit_of_work.override(unit_of_work)
+    app.container.unit_of_work.override(unit_of_work)  # type: ignore
     return fastapi.testclient.TestClient(app)

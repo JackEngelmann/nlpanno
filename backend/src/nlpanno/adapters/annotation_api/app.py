@@ -25,7 +25,7 @@ def create_app() -> fastapi.FastAPI:
     _setup_db(unit_of_work, settings)
 
     app = fastapi.FastAPI()
-    app.container = container
+    app.container = container  # type: ignore
     middlewares.add_middlewares(app)
 
     api_router = fastapi.APIRouter(prefix="/api")
