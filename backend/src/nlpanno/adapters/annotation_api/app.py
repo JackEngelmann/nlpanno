@@ -9,34 +9,42 @@ from nlpanno.application import unitofwork
 from . import controller_sample, controller_static, controller_task, middlewares
 
 
-def create_app(include_static_files: bool = True) -> fastapi.FastAPI:
+def create_app() -> fastapi.FastAPI:
     """Create the fastAPI app."""
     settings = nlpanno.config.ApplicationSettings()
     container = nlpanno.container.create_container(settings)
+    container.wire(
+        modules=[
+            controller_sample,
+            controller_task,
+            controller_static,
+        ]
+    )
 
     unit_of_work = container.unit_of_work()
-    _setup_db(unit_of_work)
+    _setup_db(unit_of_work, settings)
 
     app = fastapi.FastAPI()
+    app.container = container
     middlewares.add_middlewares(app)
 
     api_router = fastapi.APIRouter(prefix="/api")
     api_router.include_router(controller_sample.router)
     api_router.include_router(controller_task.router)
     app.include_router(api_router)
-    if include_static_files:
+    if settings.backend_serves_static_files:
         controller_static.initialize(app)
 
     return app
 
 
-app = create_app()
-
-
-def _setup_db(unit_of_work: unitofwork.UnitOfWork) -> None:
+def _setup_db(
+    unit_of_work: unitofwork.UnitOfWork, settings: nlpanno.config.ApplicationSettings
+) -> None:
     with unit_of_work:
         unit_of_work.create_tables()
-        _fill_db_with_test_data(unit_of_work)
+        if settings.fill_db_with_test_data:
+            _fill_db_with_test_data(unit_of_work)
         unit_of_work.commit()
 
 

@@ -1,7 +1,7 @@
 """Implementation of the HTTP endpoints."""
 
 import fastapi
-from dependency_injector.wiring import Provide
+from dependency_injector.wiring import Provide, inject
 
 from nlpanno.application import usecase
 from nlpanno.container import Container
@@ -12,6 +12,7 @@ router = fastapi.APIRouter(prefix="/tasks")
 
 
 @router.get("/{task_id}", response_model=schema.TaskReadSchema)
+@inject
 def get_task(
     task_id: str,
     fetch_annotation_task_use_case: usecase.FetchAnnotationTaskUseCase = fastapi.Depends(  # noqa: B008
@@ -24,6 +25,7 @@ def get_task(
 
 
 @router.get("/{task_id}/nextSample")
+@inject
 def get_next_sample(
     task_id: str,
     fetch_annotation_task_use_case: usecase.FetchAnnotationTaskUseCase = fastapi.Depends(  # noqa: B008

@@ -1,7 +1,7 @@
 """Implementation of the HTTP endpoints."""
 
 import fastapi
-from dependency_injector.wiring import Provide
+from dependency_injector.wiring import Provide, inject
 
 from nlpanno.application import usecase
 from nlpanno.container import Container
@@ -12,6 +12,7 @@ router = fastapi.APIRouter(prefix="/samples")
 
 
 @router.patch("/{sample_id}")
+@inject
 def patch(
     sample_id: str,
     sample_patch: schema.SamplePatchSchema,

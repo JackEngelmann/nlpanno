@@ -14,3 +14,4 @@ class ApplicationSettings(pydantic_settings.BaseSettings):
     # TODO: Add dataset options.
 
     backend_serves_static_files: bool = False
+    fill_db_with_test_data: bool = False

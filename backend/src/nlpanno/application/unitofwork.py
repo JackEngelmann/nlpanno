@@ -38,11 +38,3 @@ class UnitOfWork(abc.ABC):
     @abc.abstractmethod
     def create_tables(self) -> None:
         raise NotImplementedError()
-
-
-class UnitOfWorkFactory(abc.ABC):
-    """Base class for unit of work factories."""
-
-    @abc.abstractmethod
-    def __call__(self) -> UnitOfWork:
-        raise NotImplementedError()

@@ -118,6 +118,7 @@ class TestAnnotationTaskRepository:
 @pytest.fixture(params=("inmemory", "sqlalchemy"))
 def unit_of_work(request: pytest.FixtureRequest) -> unitofwork.UnitOfWork:
     """Fixture creating a unit of work."""
+    unit_of_work: unitofwork.UnitOfWork
     if request.param == "inmemory":
         unit_of_work = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWork()
     elif request.param == "sqlalchemy":

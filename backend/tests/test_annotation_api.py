@@ -93,7 +93,6 @@ def create_client(
     if task_config is None:
         task_config = model.AnnotationTask(model.create_id(), ())
 
-    # TODO: this doesn't work.
     unit_of_work = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWork()
     with unit_of_work:
         for sample in samples:
@@ -101,7 +100,6 @@ def create_client(
         unit_of_work.annotation_tasks.create(task_config)
         unit_of_work.commit()
 
-    app = annotation_api.create_app(
-        include_static_files=False,
-    )
+    app = annotation_api.create_app()
+    app.container.unit_of_work.override(unit_of_work)
     return fastapi.testclient.TestClient(app)
