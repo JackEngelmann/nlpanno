@@ -19,17 +19,25 @@ def map_sample_to_read_schema(
     confidence_by_class = {
         estimate.text_class_id: estimate.confidence for estimate in sample.estimates
     }
-    text_class_predictions = tuple(
-        confidence_by_class.get(text_class.id, 0.0) for text_class in task.text_classes
-    )
     text_class_read_schema = (
         map_text_class_to_read_schema(sample.text_class) if sample.text_class else None
+    )
+    available_text_classes = tuple(
+        schema.AvailableTextClassReadSchema(
+            id=text_class.id,
+            name=text_class.name,
+            confidence=confidence_by_class.get(text_class.id, 0.0),
+        )
+        for text_class in task.text_classes
+    )
+    sorted_available_text_classes = tuple(
+        sorted(available_text_classes, key=lambda x: x.confidence, reverse=True)
     )
     return schema.SampleReadSchema(
         id=sample.id,
         text=sample.text,
         text_class=text_class_read_schema,
-        text_class_predictions=text_class_predictions,
+        available_text_classes=sorted_available_text_classes,
     )
 
 

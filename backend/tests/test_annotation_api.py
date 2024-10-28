@@ -2,7 +2,6 @@
 
 import fastapi
 import fastapi.testclient
-import pytest
 
 import nlpanno.adapters.persistence.inmemory
 from nlpanno.adapters import annotation_api
@@ -13,38 +12,34 @@ _GET_TASKS_ENDPOINT = "/api/tasks"
 _PATCH_SAMPLE_ENDPOINT = "/api/samples/{sample_id}"
 _NEXT_SAMPLE_ENDPOINT = "/api/tasks/{task_id}/nextSample"
 
-_ANNOTATION_TASK_ID = model.create_id()
-_TEXT_CLASS_1 = model.TextClass("c1", "class 1", _ANNOTATION_TASK_ID)
-_TEXT_CLASS_2 = model.TextClass("c2", "class 2", _ANNOTATION_TASK_ID)
-_ANNOTATION_TASK = model.AnnotationTask(_ANNOTATION_TASK_ID, (_TEXT_CLASS_1, _TEXT_CLASS_2))
-
 
 def test_get_task() -> None:
     """Test getting the task config."""
-    annotation_task = model.AnnotationTask(model.create_id())
-    annotation_task.create_text_class("class name")
-    text_class = annotation_task.text_classes[0]
+    annotation_task = model.AnnotationTask.create()
+    text_class = annotation_task.create_text_class("class name")
     expected_response = {
         "id": annotation_task.id,
         "textClasses": [
             {"id": text_class.id, "name": text_class.name},
-        ]
+        ],
     }
     client = create_client((), annotation_task)
     endpoint = _GET_TASK_ENDPOINT.format(task_id=annotation_task.id)
+
     response = client.get(endpoint)
+
     assert response.status_code == 200
     assert response.json() == expected_response
 
 
 def test_get_tasks() -> None:
     """Test getting all tasks."""
-    annotation_task = model.AnnotationTask(model.create_id(), ())
-    annotation_task.create_text_class("class name")
-    text_class = annotation_task.text_classes[0]
-
+    annotation_task = model.AnnotationTask.create()
+    text_class = annotation_task.create_text_class("class name")
     client = create_client((), annotation_task)
+
     response = client.get(_GET_TASKS_ENDPOINT)
+
     assert response.status_code == 200
     assert response.json() == [
         {
@@ -56,63 +51,51 @@ def test_get_tasks() -> None:
 
 def test_get_next_sample() -> None:
     """Test getting the next sample."""
-    sample_id = model.create_id()
-    annotation_task_id = model.create_id()
-    annotation_task = model.AnnotationTask(annotation_task_id, (_TEXT_CLASS_1, _TEXT_CLASS_2))
-    sample = model.Sample(
-        id=sample_id,
-        annotation_task_id=annotation_task_id,
-        text="text",
-    )
+    annotation_task = model.AnnotationTask.create()
+    text_class_1 = annotation_task.create_text_class("class 1")
+    text_class_2 = annotation_task.create_text_class("class 2")
+    sample = model.Sample.create(annotation_task.id, "text")
+    sample.add_class_estimate(model.ClassEstimate.create(text_class_1.id, 0.2))
+    sample.add_class_estimate(model.ClassEstimate.create(text_class_2.id, 0.3))
+    expected_response = {
+        "id": sample.id,
+        "text": "text",
+        "textClass": None,
+        "availableTextClasses": [
+            {"id": text_class_2.id, "name": text_class_2.name, "confidence": 0.3},
+            {"id": text_class_1.id, "name": text_class_1.name, "confidence": 0.2},
+        ],
+    }
     client = create_client((sample,), annotation_task)
-    endpoint = _NEXT_SAMPLE_ENDPOINT.format(task_id=annotation_task_id)
+    endpoint = _NEXT_SAMPLE_ENDPOINT.format(task_id=annotation_task.id)
+
     response = client.get(endpoint)
+
     assert response.status_code == 200
-    assert response.json() is not None
-    assert response.json()["id"] == sample_id
+    assert response.json() == expected_response
 
 
-@pytest.mark.parametrize(
-    "input_data, expected_response",
-    [
-        (
-            {
-                "textClassId": _TEXT_CLASS_2.id,
-            },
-            {
-                "id": "id",
-                "text": "text",
-                "textClass": {"id": _TEXT_CLASS_2.id, "name": _TEXT_CLASS_2.name},
-                "textClassPredictions": [0.0, 0.0],
-            },
-        ),
-    ],
-)
-def test_patch_sample(
-    input_data: dict,
-    expected_response: dict,
-) -> None:
+def test_patch_sample() -> None:
     """Test the patching (partial update) a sample."""
-    sample = model.Sample(
-        "id",
-        _ANNOTATION_TASK.id,
-        "text",
-        _TEXT_CLASS_1,
-    )
-    client = create_client((sample,), _ANNOTATION_TASK)
+    annotation_task = model.AnnotationTask.create()
+    text_class_1 = annotation_task.create_text_class("class 1")
+    text_class_2 = annotation_task.create_text_class("class 2")
+    sample = model.Sample.create(annotation_task.id, "text")
+    sample.annotate(text_class_1)
+    client = create_client((sample,), annotation_task)
     endpoint = _PATCH_SAMPLE_ENDPOINT.format(sample_id=sample.id)
+    input_data = {"textClassId": text_class_2.id}
+
     updated = client.patch(endpoint, json=input_data)
+
     assert updated.status_code == 200
-    assert updated.json() == expected_response
+    assert updated.json()["textClass"]["id"] == text_class_2.id
 
 
 def create_client(
-    samples: tuple[model.Sample, ...], task_config: model.AnnotationTask | None = None
+    samples: tuple[model.Sample, ...], task_config: model.AnnotationTask
 ) -> fastapi.testclient.TestClient:
     """Create a client for testing."""
-    if task_config is None:
-        task_config = model.AnnotationTask(model.create_id(), ())
-
     unit_of_work = nlpanno.adapters.persistence.inmemory.InMemoryUnitOfWork()
     with unit_of_work:
         for sample in samples:

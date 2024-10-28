@@ -62,8 +62,14 @@ class AnnotationTask(Entity):
                 return text_class
         raise ValueError(f"Text class with id {id_} not found.")
 
-    def create_text_class(self, name: str) -> None:
-        self.text_classes = self.text_classes + (TextClass.create(name, self.id),)
+    @classmethod
+    def create(cls) -> Self:
+        return cls(id=create_id(), text_classes=())
+
+    def create_text_class(self, name: str) -> TextClass:
+        text_class = TextClass.create(name, self.id)
+        self.text_classes = self.text_classes + (text_class,)
+        return text_class
 
 
 @dataclasses.dataclass
@@ -75,6 +81,10 @@ class Sample(Entity):
     text_class: Optional[TextClass] = None
     embedding: Optional[Embedding] = None
     estimates: tuple[ClassEstimate, ...] = ()
+
+    @classmethod
+    def create(cls, annotation_task_id: Id, text: str) -> Self:
+        return cls(id=create_id(), annotation_task_id=annotation_task_id, text=text)
 
     def annotate(self, text_class: TextClass | None) -> None:
         # TODO: Add annotation service that checks that the text class is valid.
