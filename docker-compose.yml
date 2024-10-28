@@ -11,8 +11,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    command: ["nlpanno", "start-annotation-server"]
     environment:
       - NLPANNO_DATABASE_URL=postgresql://postgres:postgres@db:5432/nlpanno
+      - NLPANNO_FILL_DB_WITH_TEST_DATA=true
       - NLPANNO_HOST=0.0.0.0
     ports:
       - 8000:8000

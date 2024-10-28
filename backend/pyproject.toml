@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-nlpanno = "nlpanno.main:app"
+nlpanno = "nlpanno.cli:app"
 
 [project.optional-dependencies]
 develop = [
