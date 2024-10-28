@@ -1,29 +1,10 @@
 import logging
-
+import time
 import nlpanno.container
-from nlpanno import config, worker
-from nlpanno.application import usecase
+from nlpanno import config
 
 # TODO: use different logger.
 _LOGGER = logging.getLogger("nlpanno")
-
-
-class EmbeddingWorker(worker.Worker):
-    """Worker for embedding."""
-
-    def __init__(
-        self,
-        embed_all_samples_use_case: usecase.EmbedAllSamplesUseCase,
-    ) -> None:
-        super().__init__(logger=_LOGGER, name="embedding", sleep_time=10)
-        self._embed_all_samples_use_case = embed_all_samples_use_case
-
-    def _process(self) -> worker.ProcessResult:
-        """Process the worker."""
-        did_work = self._embed_all_samples_use_case.execute()
-        if not did_work:
-            return worker.ProcessResult.NOTHING_TO_DO
-        return worker.ProcessResult.FINISHED_WORK
 
 
 def run() -> None:
@@ -31,8 +12,11 @@ def run() -> None:
     settings = config.ApplicationSettings()
     container = nlpanno.container.create_container(settings)
     embed_all_samples_use_case = container.embed_all_samples_use_case()
-    embedding_worker = EmbeddingWorker(embed_all_samples_use_case)
-    embedding_worker.start()
+    while True:
+        did_work = embed_all_samples_use_case.execute()
+        if not did_work:
+            _LOGGER.info("No work to do, sleeping for 10 seconds.")
+            time.sleep(10)
 
 
 if __name__ == "__main__":
