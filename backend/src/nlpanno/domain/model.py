@@ -52,7 +52,7 @@ class ClassEstimate(Entity):
 class AnnotationTask(Entity):
     """Data structure for task metadata."""
 
-    text_classes: tuple[TextClass, ...]
+    text_classes: tuple[TextClass, ...] = ()
     # TODO: add samples?
     # Would need to find a solution not to load all samples in memory.
 

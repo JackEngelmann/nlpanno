@@ -24,6 +24,18 @@ def get_task(
     return mapper.map_task_to_read_schema(annotation_task)
 
 
+@router.get("", response_model=list[schema.TaskReadSchema])
+@inject
+def get_tasks(
+    fetch_all_annotation_tasks_use_case: usecase.FetchAllAnnotationTasksUseCase = fastapi.Depends(  # noqa: B008
+        Provide[Container.fetch_all_annotation_tasks_use_case]
+    ),
+) -> list[schema.TaskReadSchema]:
+    """Get all tasks."""
+    annotation_tasks = fetch_all_annotation_tasks_use_case.execute()
+    return [mapper.map_task_to_read_schema(task) for task in annotation_tasks]
+
+
 @router.get("/{task_id}/nextSample")
 @inject
 def get_next_sample(

@@ -114,6 +114,21 @@ class TestAnnotationTaskRepository:
             assert found_task is not None
             assert found_task == task_to_find
 
+    @staticmethod
+    def test_find(unit_of_work: unitofwork.UnitOfWork) -> None:
+        """Test finding all annotation tasks."""
+        first_task = model.AnnotationTask(model.create_id(), ())
+        first_task.create_text_class("class 1")
+        second_task = model.AnnotationTask(model.create_id(), ())
+        with unit_of_work:
+            unit_of_work.annotation_tasks.create(first_task)
+            unit_of_work.annotation_tasks.create(second_task)
+            unit_of_work.commit()
+            found_tasks = unit_of_work.annotation_tasks.find()
+        assert len(found_tasks) == 2
+        assert first_task in found_tasks
+        assert second_task in found_tasks
+
 
 @pytest.fixture(params=("inmemory", "sqlalchemy"))
 def unit_of_work(request: pytest.FixtureRequest) -> unitofwork.UnitOfWork:

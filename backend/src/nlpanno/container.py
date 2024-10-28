@@ -82,6 +82,11 @@ class Container(dependency_injector.containers.DeclarativeContainer):
         unit_of_work,
     )
 
+    fetch_all_annotation_tasks_use_case = dependency_injector.providers.Factory(
+        nlpanno.application.usecase.FetchAllAnnotationTasksUseCase,
+        unit_of_work,
+    )
+
 
 def create_container(settings: nlpanno.config.ApplicationSettings | None = None) -> Container:
     if settings is None:

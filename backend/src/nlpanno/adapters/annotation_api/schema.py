@@ -38,6 +38,7 @@ class SamplePatchSchema(BaseSchema):
 class TaskReadSchema(BaseSchema):
     """Data transfer object for a task config."""
 
+    id: str
     text_classes: tuple[TextClassReadSchema, ...] = pydantic.Field(
         serialization_alias="textClasses"
     )

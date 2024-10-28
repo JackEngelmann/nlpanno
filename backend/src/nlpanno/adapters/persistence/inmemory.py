@@ -86,6 +86,9 @@ class InMemoryAnnotationTaskRepository(repository.AnnotationTaskRepository):
     def create(self, task: model.AnnotationTask) -> None:
         self._tasks.append(task)
 
+    def find(self) -> tuple[model.AnnotationTask, ...]:
+        return tuple(self._tasks)
+
 
 class InMemoryUnitOfWork(unitofwork.UnitOfWork):
     def __init__(self) -> None:

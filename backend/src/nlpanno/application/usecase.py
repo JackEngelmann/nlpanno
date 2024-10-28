@@ -131,3 +131,12 @@ class FetchAnnotationTaskUseCase:
     def execute(self, task_id: model.Id) -> model.AnnotationTask:
         with self._unit_of_work as unit_of_work:
             return unit_of_work.annotation_tasks.get_by_id(task_id)
+
+
+class FetchAllAnnotationTasksUseCase:
+    def __init__(self, unit_of_work: unitofwork.UnitOfWork) -> None:
+        self._unit_of_work = unit_of_work
+
+    def execute(self) -> list[model.AnnotationTask]:
+        with self._unit_of_work as unit_of_work:
+            return list(unit_of_work.annotation_tasks.find())

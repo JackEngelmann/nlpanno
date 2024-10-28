@@ -217,6 +217,10 @@ class SQLAlchemyAnnotationTaskRepository(repository.AnnotationTaskRepository):
         persistence_task = AnnotationTask.from_domain(task)
         self._session.add(persistence_task)
 
+    def find(self) -> tuple[model.AnnotationTask, ...]:
+        persistence_tasks = self._session.query(AnnotationTask).all()
+        return tuple(persistence_task.to_domain() for persistence_task in persistence_tasks)
+
 
 class SQLAlchemyUnitOfWork(unitofwork.UnitOfWork):
     """Database session using SQLAlchemy."""

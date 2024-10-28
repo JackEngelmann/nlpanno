@@ -34,11 +34,12 @@ def map_sample_to_read_schema(
 
 
 def map_task_to_read_schema(
-    task_config: model.AnnotationTask,
+    annotation_task: model.AnnotationTask,
 ) -> schema.TaskReadSchema:
     """Map a task to a read schema."""
     return schema.TaskReadSchema(
+        id=annotation_task.id,
         text_classes=tuple(
-            map_text_class_to_read_schema(text_class) for text_class in task_config.text_classes
+            map_text_class_to_read_schema(text_class) for text_class in annotation_task.text_classes
         ),
     )

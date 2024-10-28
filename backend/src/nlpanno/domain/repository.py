@@ -54,3 +54,8 @@ class AnnotationTaskRepository(abc.ABC):
     def create(self, task: model.AnnotationTask) -> None:
         """Create a task."""
         raise NotImplementedError()
+
+    @abc.abstractmethod
+    def find(self) -> tuple[model.AnnotationTask, ...]:
+        """Find all tasks."""
+        raise NotImplementedError()

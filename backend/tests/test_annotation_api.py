@@ -9,6 +9,7 @@ from nlpanno.adapters import annotation_api
 from nlpanno.domain import model
 
 _GET_TASK_ENDPOINT = "/api/tasks/{task_id}"
+_GET_TASKS_ENDPOINT = "/api/tasks"
 _PATCH_SAMPLE_ENDPOINT = "/api/samples/{sample_id}"
 _NEXT_SAMPLE_ENDPOINT = "/api/tasks/{task_id}/nextSample"
 
@@ -20,11 +21,13 @@ _ANNOTATION_TASK = model.AnnotationTask(_ANNOTATION_TASK_ID, (_TEXT_CLASS_1, _TE
 
 def test_get_task() -> None:
     """Test getting the task config."""
-    annotation_task = model.AnnotationTask(model.create_id(), (_TEXT_CLASS_1, _TEXT_CLASS_2))
+    annotation_task = model.AnnotationTask(model.create_id())
+    annotation_task.create_text_class("class name")
+    text_class = annotation_task.text_classes[0]
     expected_response = {
+        "id": annotation_task.id,
         "textClasses": [
-            {"id": _TEXT_CLASS_1.id, "name": _TEXT_CLASS_1.name},
-            {"id": _TEXT_CLASS_2.id, "name": _TEXT_CLASS_2.name},
+            {"id": text_class.id, "name": text_class.name},
         ]
     }
     client = create_client((), annotation_task)
@@ -32,6 +35,23 @@ def test_get_task() -> None:
     response = client.get(endpoint)
     assert response.status_code == 200
     assert response.json() == expected_response
+
+
+def test_get_tasks() -> None:
+    """Test getting all tasks."""
+    annotation_task = model.AnnotationTask(model.create_id(), ())
+    annotation_task.create_text_class("class name")
+    text_class = annotation_task.text_classes[0]
+
+    client = create_client((), annotation_task)
+    response = client.get(_GET_TASKS_ENDPOINT)
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": annotation_task.id,
+            "textClasses": [{"id": text_class.id, "name": text_class.name}],
+        }
+    ]
 
 
 def test_get_next_sample() -> None:
