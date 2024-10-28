@@ -49,17 +49,19 @@ class AnnotationTask(Base):
 
     id: orm.Mapped[str] = orm.mapped_column(primary_key=True)
     text_classes: orm.Mapped[list[TextClass]] = orm.relationship()
+    name: orm.Mapped[str]
 
     def to_domain(self) -> model.AnnotationTask:
         return model.AnnotationTask(
             id=self.id,
+            name=self.name,
             text_classes=tuple(text_class.to_domain() for text_class in self.text_classes),
         )
 
     @classmethod
     def from_domain(cls, task: model.AnnotationTask) -> Self:
         text_classes = list(TextClass.from_domain(text_class) for text_class in task.text_classes)
-        return cls(id=task.id, text_classes=text_classes)
+        return cls(id=task.id, name=task.name, text_classes=text_classes)
 
 
 class Sample(Base):

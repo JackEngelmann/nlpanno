@@ -103,9 +103,9 @@ class TestAnnotationTaskRepository:
     @staticmethod
     def test_get_by_id(unit_of_work: unitofwork.UnitOfWork) -> None:
         """Test getting an annotation task by id."""
-        task_to_find = model.AnnotationTask(model.create_id(), ())
+        task_to_find = model.AnnotationTask.create("task 1")
         task_to_find.create_text_class("class 1")
-        other_task = model.AnnotationTask(model.create_id(), ())
+        other_task = model.AnnotationTask.create("task 2")
         with unit_of_work:
             unit_of_work.annotation_tasks.create(task_to_find)
             unit_of_work.annotation_tasks.create(other_task)
@@ -117,9 +117,9 @@ class TestAnnotationTaskRepository:
     @staticmethod
     def test_find(unit_of_work: unitofwork.UnitOfWork) -> None:
         """Test finding all annotation tasks."""
-        first_task = model.AnnotationTask(model.create_id(), ())
+        first_task = model.AnnotationTask.create("task 1")
         first_task.create_text_class("class 1")
-        second_task = model.AnnotationTask(model.create_id(), ())
+        second_task = model.AnnotationTask.create("task 2")
         with unit_of_work:
             unit_of_work.annotation_tasks.create(first_task)
             unit_of_work.annotation_tasks.create(second_task)

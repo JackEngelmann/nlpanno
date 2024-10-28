@@ -52,6 +52,7 @@ class ClassEstimate(Entity):
 class AnnotationTask(Entity):
     """Data structure for task metadata."""
 
+    name: str
     text_classes: tuple[TextClass, ...] = ()
     # TODO: add samples?
     # Would need to find a solution not to load all samples in memory.
@@ -63,8 +64,8 @@ class AnnotationTask(Entity):
         raise ValueError(f"Text class with id {id_} not found.")
 
     @classmethod
-    def create(cls) -> Self:
-        return cls(id=create_id(), text_classes=())
+    def create(cls, name: str = "task") -> Self:
+        return cls(id=create_id(), name=name, text_classes=())
 
     def create_text_class(self, name: str) -> TextClass:
         text_class = TextClass.create(name, self.id)
