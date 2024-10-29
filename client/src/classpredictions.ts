@@ -1,11 +1,11 @@
-import { Sample, TaskConfig } from "./types";
+import { Sample, AnnotationTask } from "./types";
 
 type ClassPrediction = {
     className: string,
     value: number
 }
 
-export function getSortedClassPredictions(sample: Sample, taskConfig: TaskConfig): ClassPrediction[] {
+export function getSortedClassPredictions(sample: Sample, taskConfig: AnnotationTask): ClassPrediction[] {
     const classNames = taskConfig.textClasses
 
     // If there are no predictions, score each class as 0.

@@ -1,28 +1,35 @@
+import { AvailableTextClass, TextClass } from "../../types";
 import { Card } from "../Card/Card";
 import { SearchableList } from "../SearchableList/SearchableList";
 import { ValueBar } from "../ValueBar/ValueBar";
 
 type Props = {
   className?: string;
-  classPredictions: {className: string, value: number}[];
-  label: string | undefined;
-  onChange(label: string): void;
+  availableTextClasses: AvailableTextClass[];
+  label: TextClass | undefined;
+  onChange(label: TextClass): void;
 };
 
 export function ClassSelection(props: Props) {
+  function onChange(availableTextClass: AvailableTextClass) {
+    props.onChange({
+      id: availableTextClass.id,
+      name: availableTextClass.name,
+    })
+  }
   return (
     <SearchableList
       className={props.className}
-      items={props.classPredictions}
-      onChange={(classPrediction) => props.onChange(classPrediction.className)}
+      items={props.availableTextClasses}
+      onChange={onChange}
       renderItem={(c, isSelected, onClick) => (
-        <Card key={c.className} onClick={onClick} isSelected={isSelected}>
-          {c.className === props.label ? <b>{c.className}</b> : c.className}
-          <ValueBar value={c.value} />
+        <Card key={c.id} onClick={onClick} isSelected={isSelected}>
+          {c.name === props.label?.name ? <b>{c.name}</b> : c.name}
+          <ValueBar value={c.confidence} />
         </Card>
       )}
       doesMatch={(c, text) =>
-        c.className.toLowerCase().includes(text.toLowerCase())
+        c.name.toLowerCase().includes(text.toLowerCase())
       }
     />
   );

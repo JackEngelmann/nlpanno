@@ -1,15 +1,28 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from 'react-router-dom';
+import { Root } from './Root';
+import { TasksScreen } from './screens/TasksScreen';
+import { AnnotationScreen } from './screens/AnnotationScreen';
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    [
+      <Route path="/" element={<Root />} />,
+      <Route path="/tasks" element={<TasksScreen />} />,
+      <Route path="/tasks/:taskId" element={<AnnotationScreen />} />,
+    ]
+  )
+);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
 

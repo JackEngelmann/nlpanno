@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Sample, TaskConfig, Status } from "./types"
+import { Sample, AnnotationTask } from "./types"
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
     const result = await fetch(url, options)
@@ -10,54 +10,51 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
     return await result.json()
 }
 
-export async function queryNextSample(): Promise<Sample> {
-    return await fetchJson<Sample>("/api/nextSample")
+export async function queryTasks(): Promise<AnnotationTask[]> {
+    return await fetchJson<AnnotationTask[]>("/api/tasks")
+}
+
+export async function queryNextSample(taskId: string): Promise<Sample> {
+    return await fetchJson<Sample>(`/api/tasks/${taskId}/nextSample`)
 }
 
 export async function mutateSample(sample: Sample) {
     return await fetchJson<Sample>(`/api/samples/${sample.id}`, {
         method: "PATCH",
-        body: JSON.stringify(sample),
+        body: JSON.stringify({
+            id: sample.id,
+            textClassId: sample.textClass?.id,
+        }),
         headers: { "Content-Type": "application/json" },
     })
 }
 
-async function queryTaskConfig(): Promise<TaskConfig> {
-    return await fetchJson<TaskConfig>("/api/taskConfig")
-}
-
-async function queryStatus(): Promise<Status> {
-    return await fetchJson<Status>("/api/status")
-}
-
-type TaskConfigQueryResult = {
-    data: TaskConfig | null
+type TasksQueryResult = {
+    data: AnnotationTask[] | null
     isLoading: boolean,
     errorOccurred: boolean
 }
 
-export function useTaskConfig(): TaskConfigQueryResult {
-    const [taskConfig, setTaskConfig] = useState<TaskConfig | null>(null)
+export function useTasks(): TasksQueryResult {
+    const [tasks, setTasks] = useState<AnnotationTask[] | null>(null)
     const [errorOccurred, setErrorOccurred] = useState(false)
 
     useEffect(() => {
         let ignore = false
 
-        queryTaskConfig()
-            .then(taskConfig => {
-                if (ignore) return
-                setTaskConfig(taskConfig)
-            }).catch(() => setErrorOccurred(true))
+        queryTasks().then(tasks => {
+            if (ignore) return
+            setTasks(tasks)
+        }).catch(() => setErrorOccurred(true))
         return () => {
-            // Ignore result when component is unmounted while waiting for the response.
             ignore = true
         }
     }, [])
 
     return {
-        isLoading: !taskConfig,
-        errorOccurred,
-        data: taskConfig
+        data: tasks,
+        isLoading: !tasks,
+        errorOccurred
     }
 }
 
@@ -69,13 +66,13 @@ type SampleStreamResult = {
     update(sample: Sample): Promise<void>
 }
 
-export function useSampleStream(): SampleStreamResult {
+export function useSampleStream(taskId: string): SampleStreamResult {
     const [samples, setSamples] = useState<Sample[]>([])
     const [errorOccurred, setErrorOccurred] = useState(false)
 
     async function loadNext() {
         try {
-            const nextSample = await queryNextSample()
+            const nextSample = await queryNextSample(taskId)
             setSamples(samples => [...samples, nextSample])
         } catch {
             setErrorOccurred(true)
@@ -95,7 +92,7 @@ export function useSampleStream(): SampleStreamResult {
     useEffect(() => {
         let ignore = false
 
-        queryNextSample()
+        queryNextSample(taskId)
             .then(sample => {
                 if (ignore) return
                 setSamples([sample])
