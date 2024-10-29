@@ -39,7 +39,7 @@ class MTOP(Dataset):
 
     def _read_data(self) -> tuple[tuple[model.Sample, ...], model.AnnotationTask]:
         """Load data from disk."""
-        annotation_task = model.AnnotationTask(model.create_id(), ())
+        annotation_task = model.AnnotationTask.create("MTOP")
         samples: list[model.Sample] = []
         text_classes: set[str] = set()
         for line in self._read_lines():
@@ -47,8 +47,7 @@ class MTOP(Dataset):
             if self._limit_hit(samples):
                 break
             text, text_class = self._parse_line(line)
-            sample = model.Sample(
-                id=model.create_id(),
+            sample = model.Sample.create(
                 annotation_task_id=annotation_task.id,
                 text=text,
             )
