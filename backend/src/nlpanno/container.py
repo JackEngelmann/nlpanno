@@ -72,7 +72,7 @@ class Container(dependency_injector.containers.DeclarativeContainer):
 
     estimate_samples_use_case = dependency_injector.providers.Factory(
         nlpanno.application.usecase.EstimateSamplesUseCase,
-        embedding_service,
+        embedding_aggregation_service,
         vector_similarity_service,
         unit_of_work,
     )
