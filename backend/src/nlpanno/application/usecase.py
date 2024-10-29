@@ -78,7 +78,7 @@ class EstimateSamplesUseCase:
     def execute(self) -> None:
         with self._unit_of_work as unit_of_work:
             class_embeddings = self._calculate_class_embeddings(unit_of_work)
-            query = repository.SampleQuery(has_label=True, has_embedding=True)
+            query = repository.SampleQuery(has_label=False, has_embedding=True)
             samples = unit_of_work.samples.find(query)
             for sample in samples:
                 _LOGGER.debug(f"Estimating sample {sample.id}")
