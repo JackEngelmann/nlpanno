@@ -20,23 +20,23 @@ services:
       - 8000:8000
     depends_on:
       - db
-  embedding-loop:
+  embedding-worker:
     platform: linux/amd64
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: ["nlpanno", "start-embedding-loop"]
+    command: ["nlpanno", "start-embedding-worker"]
     environment:
       - NLPANNO_DATABASE_URL=postgresql://postgres:postgres@db:5432/nlpanno
       - NLPANNO_HOST=0.0.0.0
     depends_on:
       - db
-  estimation-loop:
+  estimation-worker:
     platform: linux/amd64
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: ["nlpanno", "start-estimation-loop"]
+    command: ["nlpanno", "start-estimation-worker"]
     environment:
       - NLPANNO_DATABASE_URL=postgresql://postgres:postgres@db:5432/nlpanno
       - NLPANNO_HOST=0.0.0.0
