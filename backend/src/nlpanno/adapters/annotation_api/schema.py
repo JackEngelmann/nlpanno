@@ -47,6 +47,7 @@ class TaskReadSchema(BaseSchema):
     """Data transfer object for a task config."""
 
     id: str
+    name: str
     text_classes: tuple[TextClassReadSchema, ...] = pydantic.Field(
         serialization_alias="textClasses"
     )

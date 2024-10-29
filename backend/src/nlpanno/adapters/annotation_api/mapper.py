@@ -47,6 +47,7 @@ def map_task_to_read_schema(
     """Map a task to a read schema."""
     return schema.TaskReadSchema(
         id=annotation_task.id,
+        name=annotation_task.name,
         text_classes=tuple(
             map_text_class_to_read_schema(text_class) for text_class in annotation_task.text_classes
         ),
